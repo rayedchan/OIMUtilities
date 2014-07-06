@@ -79,6 +79,15 @@ public class OracleIdentityManagerClient
     }
     
     /**
+     * Get the OIMClient
+     * @return OIMClient object
+     */
+    public OIMClient getOIMClient()
+    {
+        return this.oimClient;
+    }
+    
+    /**
      * Log out user from OIMClient.
      */
     public void logout()

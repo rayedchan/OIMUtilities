@@ -6,8 +6,12 @@ import javax.security.auth.login.LoginException;
 import oracle.core.ojdl.logging.ConsoleHandler;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.iam.identity.exception.UserSearchException;
+import oracle.iam.platform.OIMClient;
 import oracle.iam.platform.authz.exception.AccessDeniedException;
+import oracle.iam.platformservice.exception.InvalidCacheCategoryException;
+import project.rayedchan.constants.JarElementType;
 import project.rayedchan.services.OracleIdentityManagerClient;
+import project.rayedchan.utilities.PlatformServiceUtilities;
 
 /**
  * Used for testing purposes.
@@ -32,38 +36,46 @@ public class TestDriver
     
     public static void main(String[] args)
     {
-        // Set log level at run time
-        //ConsoleHandler consoleHandler = new ConsoleHandler(); // Create console handler
-        //consoleHandler.setLevel(ODLLevel.TRACE); // Set runtime log level for console
-        //OracleIdentityManagerClient.logger.setLevel(ODLLevel.TRACE); // Set log level for specific logger
-        //OracleIdentityManagerClient.logger.addHandler(consoleHandler); // Add console handler to specific logger
-        
         OracleIdentityManagerClient oimClientWrapper = null;
         
         try 
         {
+            // Test OIMClient by logging in with a user and querying all the Identities
             oimClientWrapper = new OracleIdentityManagerClient(OIM_ADMIN_USERNAME, OIM_ADMIN_PASSWORD, AUTHWL_PATH, APPSERVER_TYPE, FACTORY_INITIAL_TYPE, OIM_PROVIDER_URL, true, TRUST_KEYSTORE_FOR_SSL);
-            oimClientWrapper.test();
+            //oimClientWrapper.test();
+            OIMClient oimClient = oimClientWrapper.getOIMClient();
+            
+            // Test platform service utilities
+            PlatformServiceUtilities platServUtil = new PlatformServiceUtilities(oimClient);
+            //platServUtil.uploadJar(JarElementType.ThirdParty, "/home/oracle/Desktop/OIMUtilities/dist/OIMUtilities.jar");
+            //platServUtil.deleteJar(JarElementType.ThirdParty, "OIMUtilities.jar");
+            platServUtil.purgeCache();
         } 
         
-        catch (AccessDeniedException ex) 
+        catch (Exception ex) 
         {
             Logger.getLogger(TestDriver.class.getName()).log(Level.SEVERE, null, ex);
         } 
-        
-        catch (UserSearchException ex) 
-        {
-            Logger.getLogger(TestDriver.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        catch (LoginException ex) 
-        {
-            Logger.getLogger(TestDriver.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
+         
         finally
         {
             oimClientWrapper.logout();
         } 
+    }
+    
+    /**
+     * Adjust log level for the console.
+     */
+    public static void adjustConsoleLogLevel()
+    {
+        // Set console log level at run time
+        ConsoleHandler consoleHandler = new ConsoleHandler(); // Create console handler
+        consoleHandler.setLevel(ODLLevel.TRACE); // Set runtime log level for console
+        
+        // Adjust specific loggers log level
+        OracleIdentityManagerClient.logger.setLevel(ODLLevel.TRACE); // Set log level for specific logger
+        
+        // Add console handler to specific logger
+        OracleIdentityManagerClient.logger.addHandler(consoleHandler); // Add console handler to specific logger 
     }
 }
