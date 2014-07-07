@@ -23,6 +23,11 @@ public class PlatformServiceUtilities
             
     private PlatformUtilsService platformUtilsServiceOps = null;
     
+    /**
+     * Constructor
+     * Precondition: A system administrator is logged in with the OIM client
+     * @param oimClient 
+     */
     public PlatformServiceUtilities(OIMClient oimClient)
     {
         this.platformUtilsServiceOps = oimClient.getService(PlatformUtilsService.class);

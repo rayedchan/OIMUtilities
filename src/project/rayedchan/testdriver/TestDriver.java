@@ -12,6 +12,7 @@ import oracle.iam.platformservice.exception.InvalidCacheCategoryException;
 import project.rayedchan.constants.JarElementType;
 import project.rayedchan.services.OracleIdentityManagerClient;
 import project.rayedchan.utilities.PlatformServiceUtilities;
+import project.rayedchan.utilities.RoleUtilities;
 
 /**
  * Used for testing purposes.
@@ -45,11 +46,18 @@ public class TestDriver
             //oimClientWrapper.test();
             OIMClient oimClient = oimClientWrapper.getOIMClient();
             
+            
             // Test platform service utilities
             PlatformServiceUtilities platServUtil = new PlatformServiceUtilities(oimClient);
             //platServUtil.uploadJar(JarElementType.ThirdParty, "/home/oracle/Desktop/OIMUtilities/dist/OIMUtilities.jar");
             //platServUtil.deleteJar(JarElementType.ThirdParty, "OIMUtilities.jar");
-            platServUtil.purgeCache();
+            //platServUtil.purgeCache();
+            
+            
+            // Test Role service utilities
+            RoleUtilities roleUtils = new RoleUtilities(oimClient);
+            System.out.println(roleUtils.getAllRoleCategories());
+            //roleUtils.createRoleCategory("Groups", "Maps to LDAP groups.");
         } 
         
         catch (Exception ex) 
