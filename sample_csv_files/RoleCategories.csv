@@ -1,0 +1,7 @@
+ROLE_CATEGORY_NAME;ROLE_CATEGORY_DESC
+Access States;Used to drive resources
+Groups;Maps to LDAP groups
+Affiliations;Maps to external source
+Administrative Roles;Admin
+Help Desk;Help Desk
+Security & Compliance;Security
