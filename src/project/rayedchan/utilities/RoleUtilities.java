@@ -8,15 +8,16 @@ import java.util.List;
 import java.util.logging.Level;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.core.ojdl.logging.ODLLogger;
-import oracle.iam.identity.exception.RoleCategoryAlreadyExistsException;
-import oracle.iam.identity.exception.RoleCategoryBrowseException;
-import oracle.iam.identity.exception.RoleCategoryCreateException;
-import oracle.iam.identity.exception.ValidationFailedException;
+import oracle.iam.identity.exception.*;
 import oracle.iam.identity.rolemgmt.api.RoleCategoryManager;
+import oracle.iam.identity.rolemgmt.api.RoleManager;
+import oracle.iam.identity.rolemgmt.api.RoleManagerConstants;
 import oracle.iam.identity.rolemgmt.api.RoleManagerConstants.RoleCategoryAttributeName;
+import oracle.iam.identity.rolemgmt.vo.Role;
 import oracle.iam.identity.rolemgmt.vo.RoleCategory;
 import oracle.iam.platform.OIMClient;
 import oracle.iam.platform.authz.exception.AccessDeniedException;
+import oracle.iam.platform.entitymgr.vo.SearchCriteria;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -32,6 +33,7 @@ public class RoleUtilities
     
     // Service instance variables
     private RoleCategoryManager roleCategoryMgrOps;
+    private RoleManager roleMgrOps;
     
     /**
      * Constructor
@@ -41,6 +43,7 @@ public class RoleUtilities
     public RoleUtilities(OIMClient oimClient)
     {
         this.roleCategoryMgrOps = oimClient.getService(RoleCategoryManager.class);
+        this.roleMgrOps = oimClient.getService(RoleManager.class);
     }
     
     /**
@@ -81,7 +84,7 @@ public class RoleUtilities
      * @param delimiter     Delimiter to parse an entry in a file
      * @throws IOException 
      */
-    public void bulkCreateRoleCatgory(String csvFilePath, char delimiter) throws IOException
+    public void bulkCreateRoleCategory(String csvFilePath, char delimiter) throws IOException
     {
         CSVParser csvParser = null;
         
@@ -138,7 +141,6 @@ public class RoleUtilities
         }
     }
         
-    
     /**
      * Obtains all the role categories in OIM. The OIM.ROLE_CATEGORY table contains all the
      * data about role categories.
@@ -149,5 +151,77 @@ public class RoleUtilities
     public List<RoleCategory> getAllRoleCategories() throws AccessDeniedException, RoleCategoryBrowseException
     {
         return roleCategoryMgrOps.browse(new HashSet(), new HashMap());
+    }
+    
+    /**
+     * Get all the OIM roles. All roles can stored in OIM.UPG table. 
+     * All possible role attributes: {Role Display Name, Role Unique Name, Owner Login
+     * ugp_createby, ugp_create, Role Owner Key, Role Description, Role Name, ugp_update,
+     * Owner Email, Role Namespace, Owner Display Name, Role Key, LDAP GUID, ugp_updateby,
+     * Role Category Key, Owner Last Name, ugp_data_level, Role Email, LDAP DN, Owner First Name,
+     * Role Category Name}
+     * @param returnAttrs   Contains the role attributes to query for. 
+     * @return List of Roles
+     * @throws AccessDeniedException
+     * @throws RoleSearchException 
+     */
+    public List<Role> getAllRoles(HashSet returnAttrs) throws AccessDeniedException, RoleSearchException
+    {
+        // Query based on "Role Name" attribute with any value
+        SearchCriteria criteria = new SearchCriteria(RoleManagerConstants.RoleAttributeName.NAME.getId(), "*", SearchCriteria.Operator.EQUAL);
+        return roleMgrOps.search(criteria, returnAttrs, new HashMap());
+    }
+    
+    /**
+     * Get the role category key by role category name .  
+     * @param roleCategoryName  Name of the role category (ROLE_CATEGORY.ROLE_CATEGORY_NAME)
+     * @return Role category key (ROLE_CATEGORY.ROLE_CATEGORY_KEY)
+     * @throws SearchKeyNotUniqueException
+     * @throws AccessDeniedException
+     * @throws NoSuchRoleCategoryException
+     * @throws RoleCategoryLookupException 
+     */
+    public Long getRoleCategoryKeyByName(String roleCategoryName) throws SearchKeyNotUniqueException, AccessDeniedException, NoSuchRoleCategoryException, RoleCategoryLookupException
+    {
+        // Only query for "Role Category Key"
+        HashSet retAttrs = new HashSet();
+        retAttrs.add(RoleManagerConstants.RoleCategoryAttributeName.KEY.getId());
+        
+        // Get role category key by role category name
+        RoleCategory roleCategory = roleCategoryMgrOps.getDetails(RoleManagerConstants.RoleCategoryAttributeName.NAME.getId(), roleCategoryName, retAttrs);
+        
+        return Long.parseLong(roleCategory.getEntityId());
+    }
+    
+    /**
+     * Create a single role in OIM. In the backend, the API inserts a record into
+     * the OIM.UPG table.
+     * @param roleName          Name of role to be created
+     * @param categoryName      Role Category the new role should be place into 
+     * @param description       Description of the new role
+     * @throws ValidationFailedException
+     * @throws AccessDeniedException
+     * @throws RoleAlreadyExistsException
+     * @throws RoleCreateException
+     * @throws SearchKeyNotUniqueException
+     * @throws NoSuchRoleCategoryException
+     * @throws RoleCategoryLookupException 
+     */
+    public void createRole(String roleName, String categoryName, String description) throws ValidationFailedException, AccessDeniedException, RoleAlreadyExistsException, RoleCreateException, SearchKeyNotUniqueException, NoSuchRoleCategoryException, RoleCategoryLookupException
+    {
+        // Get the role category key by role category name
+        Long categoryKey = getRoleCategoryKeyByName(categoryName);
+        
+        // Set the attributes for a Role
+        HashMap attrs = new HashMap();
+        attrs.put(RoleManagerConstants.RoleAttributeName.NAME.getId(), roleName); // Set "Role Name"
+        attrs.put(RoleManagerConstants.RoleAttributeName.CATEGORY_KEY.getId(), categoryKey); // Set "Role Category Key"
+        attrs.put(RoleManagerConstants.RoleAttributeName.DESCRIPTION.getId(), description); // Set "Role Description"
+            
+        // Create Role object
+        Role newRole = new Role(attrs);
+        
+        // Use OIM API to create role 
+        roleMgrOps.create(newRole);
     }
 }

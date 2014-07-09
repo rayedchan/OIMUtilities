@@ -1,5 +1,7 @@
 package project.rayedchan.testdriver;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.security.auth.login.LoginException;
@@ -58,7 +60,11 @@ public class TestDriver
             RoleUtilities roleUtils = new RoleUtilities(oimClient);
             //System.out.println(roleUtils.getAllRoleCategories());
             //roleUtils.createRoleCategory("Groups", "Maps to LDAP groups.");
-            roleUtils.bulkCreateRoleCatgory("sample_csv_files/RoleCategories.csv", ';');
+            //roleUtils.bulkCreateRoleCategory("sample_csv_files/RoleCategories.csv", ';');
+            //System.out.println(roleUtils.getAllRoles(new HashSet(Arrays.asList("Role Name","Role Category Name","Role Category Key"))));
+            //System.out.println(roleUtils.getRoleCategoryKeyByName("Security & Compliance"));
+            roleUtils.createRole("engineer", "Groups", "engineer Group");
+        
         } 
         
         catch (Exception ex) 
