@@ -60,10 +60,11 @@ public class TestDriver
             RoleUtilities roleUtils = new RoleUtilities(oimClient);
             //System.out.println(roleUtils.getAllRoleCategories());
             //roleUtils.createRoleCategory("Groups", "Maps to LDAP groups.");
-            //roleUtils.bulkCreateRoleCategory("sample_csv_files/RoleCategories.csv", ';');
+            //roleUtils.bulkCreateRoleCategories("sample_csv_files/RoleCategories.csv", ';');
             //System.out.println(roleUtils.getAllRoles(new HashSet(Arrays.asList("Role Name","Role Category Name","Role Category Key"))));
             //System.out.println(roleUtils.getRoleCategoryKeyByName("Security & Compliance"));
-            roleUtils.createRole("engineer", "Groups", "engineer Group");
+            //roleUtils.createRole("engineer", "Groups", "engineer Group");
+            //roleUtils.bulkCreateRoles("sample_csv_files/Roles.csv", ';');
         
         } 
         

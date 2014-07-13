@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.core.ojdl.logging.ODLLogger;
 import oracle.iam.identity.exception.*;
@@ -84,7 +86,7 @@ public class RoleUtilities
      * @param delimiter     Delimiter to parse an entry in a file
      * @throws IOException 
      */
-    public void bulkCreateRoleCategory(String csvFilePath, char delimiter) throws IOException
+    public void bulkCreateRoleCategories(String csvFilePath, char delimiter) throws IOException
     {
         CSVParser csvParser = null;
         
@@ -195,7 +197,7 @@ public class RoleUtilities
     
     /**
      * Create a single role in OIM. In the backend, the API inserts a record into
-     * the OIM.UPG table.
+     * the OIM.UGP table.
      * @param roleName          Name of role to be created
      * @param categoryName      Role Category the new role should be place into 
      * @param description       Description of the new role
@@ -223,5 +225,90 @@ public class RoleUtilities
         
         // Use OIM API to create role 
         roleMgrOps.create(newRole);
+        logger.log(ODLLevel.NOTIFICATION, "Role created: {0}, Role Category Name = {1}", new Object[]{newRole, categoryName});
+    }
+    
+    /**
+     * Bulk create roles given in a CSV file.
+     * Precondition: CSV file must have proper format. The first line is the header.
+     * UGP_ROLENAME<delimiter>ROLE_CATEGORY_NAME<delimiter>UGP_DESCRIPTION
+     * roleName<delimiter>categoryName<delimiter>description
+     * @param csvFilePath   Path to CSV file that contains role data
+     * @param delimiter     A character used for separating the values in an entry
+     * @throws IOException 
+     */
+    public void bulkCreateRoles(String csvFilePath, char delimiter) throws IOException
+    {    
+        CSVParser csvParser = null;
+        
+        try
+        {
+            // Objects for parsing CSV file     
+            CSVFormat format = CSVFormat.DEFAULT.withHeader().withDelimiter(delimiter); // Indicate format for csv file; Specify csv file has header and use specific delimiter for parsing
+            csvParser = new CSVParser(new FileReader(csvFilePath), format);
+            
+            // Get CSV header
+            Map header = csvParser.getHeaderMap();
+            
+            // Iterate each entry in csv file excluding the header entry
+            for (CSVRecord record: csvParser)
+            {
+                // Get entry (row) values via header names (columns)
+                String roleName = record.get("UGP_ROLENAME");
+                String roleCategoryName = record.get("ROLE_CATEGORY_NAME");
+                String roleDescription = record.get("UGP_DESCRIPTION");
+                long entryNumber = record.getRecordNumber();
+
+                try 
+                {
+                    // Method call to create a single role
+                    createRole(roleName, roleCategoryName, roleDescription);
+                } 
+                
+                catch (ValidationFailedException ex) 
+                {
+                    logger.log(Level.WARNING, "Failed to add Role entry {0}: Header = {1}, Values = {2}", new Object[]{entryNumber, header, record}, ex);
+                } 
+                
+                catch (AccessDeniedException ex) 
+                {
+                    logger.log(Level.WARNING, "Failed to add Role entry {0}: Header = {1}, Values = {2}", new Object[]{entryNumber, header, record}, ex);                   
+                } 
+                
+                catch (RoleAlreadyExistsException ex) 
+                {
+                    logger.log(Level.WARNING, "Failed to add Role entry {0}: Header = {1}, Values = {2}", new Object[]{entryNumber, header, record}, ex);
+                } 
+                
+                catch (RoleCreateException ex)
+                {
+                    logger.log(Level.WARNING, "Failed to add Role entry {0}: Header = {1}, Values = {2}", new Object[]{entryNumber, header, record}, ex);
+                } 
+                
+                catch (SearchKeyNotUniqueException ex) 
+                {
+                    logger.log(Level.WARNING, "Failed to add Role entry {0}: Header = {1}, Values = {2}", new Object[]{entryNumber, header, record}, ex);
+                } 
+                
+                catch (NoSuchRoleCategoryException ex) 
+                {
+                    logger.log(Level.WARNING, "Failed to add Role entry {0}: Header = {1}, Values = {2}", new Object[]{entryNumber, header, record}, ex);
+                } 
+                
+                catch (RoleCategoryLookupException ex) 
+                {
+                    logger.log(Level.WARNING, "Failed to add Role entry {0}: Header = {1}, Values = {2}", new Object[]{entryNumber, header, record}, ex);
+                }
+            } // end for loop
+        } // end try statement
+        
+        finally
+        {
+            // Close parser
+            if(csvParser != null)
+            {
+                csvParser.close();
+            }
+        }
     }
 }
