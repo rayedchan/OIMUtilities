@@ -197,7 +197,8 @@ public class RoleUtilities
     
     /**
      * Create a single role in OIM. In the backend, the API inserts a record into
-     * the OIM.UGP table.
+     * the OIM.UGP table. The role name is unique regardless of role category. Role
+     * names are case insensitive (E.g. engr is the same as EnGr).
      * @param roleName          Name of role to be created
      * @param categoryName      Role Category the new role should be place into 
      * @param description       Description of the new role
@@ -310,5 +311,83 @@ public class RoleUtilities
                 csvParser.close();
             }
         }
+    }
+    
+    /**
+     * Get all the role memberships from a single user.
+     * Relevant tables to get user's role membership:
+     * UPA_GRP_MEMBERSHIP and UPA_USR
+     * The UPA_USR_KEY is used to join to each table.
+     * Get UPG_KEY from UPA_GRP_MEMBERSHIP. Get USR_KEY from UPA_USR.
+     * @param userKey   The user key from USR.USR_KEY column
+     * @throws AccessDeniedException
+     * @throws UserMembershipException 
+     */
+    public List getAllRoleMembershipOfAUser(String userKey) throws AccessDeniedException, UserMembershipException
+    {
+        boolean getIndirectAndDirectRoleMembership = true;
+        return roleMgrOps.getUserMemberships(userKey, getIndirectAndDirectRoleMembership);
+    }
+    
+    
+    /**
+     * Get the role key based on the role name.
+     * @param roleName  Name of the role (UGP.UGP_NAME)
+     * @return The role key (UGP_KEY)
+     * @throws SearchKeyNotUniqueException
+     * @throws AccessDeniedException
+     * @throws NoSuchRoleException
+     * @throws RoleLookupException 
+     */
+    public Long getRoleKeyByRoleName(String roleName) throws SearchKeyNotUniqueException, AccessDeniedException, NoSuchRoleException, RoleLookupException
+    {
+        HashSet retAttrs = new HashSet();
+        retAttrs.add(RoleManagerConstants.RoleAttributeName.KEY.getId()); // Role Key
+        Role role = roleMgrOps.getDetails(RoleManagerConstants.RoleAttributeName.NAME.getId(), roleName, retAttrs); // Search by role name attribute which is unique
+        return Long.parseLong(role.getEntityId());
+    }
+    
+    
+    /**
+     * Assign a role to a user.
+     * @param roleName  Role name (UGP.UGP_NAME) to assign to user 
+     * @param usrKey    User key (USR.USR_KEY)
+     * @throws ValidationFailedException
+     * @throws AccessDeniedException
+     * @throws RoleGrantException      Detects if user is already granted the role
+     * @throws SearchKeyNotUniqueException
+     * @throws NoSuchRoleException
+     * @throws RoleLookupException 
+     */
+    public void grantRoleToUser(String roleName, String userKey) throws ValidationFailedException, AccessDeniedException, RoleGrantException, SearchKeyNotUniqueException, NoSuchRoleException, RoleLookupException
+    {
+        String roleKey = String.valueOf(getRoleKeyByRoleName(roleName));
+        HashSet usrKeys = new HashSet();
+        usrKeys.add(userKey);
+        roleMgrOps.grantRole(roleKey, usrKeys);
+        logger.log(ODLLevel.NOTIFICATION, "Granted role successfully: Role Key = {0}, Role Name = {1}, User Key = {2},", new Object[]{roleKey, roleName, userKey});
+    }
+    
+    
+    /**
+     * Removes a role from a user.
+     * The API does not detect if you are trying to remove a role which
+     * the user does not have.
+     * @param roleName  Role name (UGP.UGP_NAME) to assign to user 
+     * @param userKey   User key (USR.USR_KEY)
+     * @throws SearchKeyNotUniqueException
+     * @throws AccessDeniedException
+     * @throws NoSuchRoleException
+     * @throws ValidationFailedException
+     * @throws RoleGrantRevokeException
+     * @throws RoleLookupException 
+     */
+    public void revokeRoleFromUser(String roleName, String userKey) throws SearchKeyNotUniqueException, AccessDeniedException, NoSuchRoleException, ValidationFailedException, RoleGrantRevokeException, RoleLookupException 
+    {
+        String roleKey = String.valueOf(getRoleKeyByRoleName(roleName));
+        HashSet usrKeys = new HashSet();
+        usrKeys.add(userKey);
+        roleMgrOps.revokeRoleGrant(roleKey, usrKeys);
+        logger.log(ODLLevel.NOTIFICATION, "Revoked role successfully: Role Key = {0}, Role Name = {1}, User Key = {2},", new Object[]{roleKey, roleName, userKey});
     }
 }

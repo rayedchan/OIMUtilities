@@ -65,6 +65,10 @@ public class TestDriver
             //System.out.println(roleUtils.getRoleCategoryKeyByName("Security & Compliance"));
             //roleUtils.createRole("engineer", "Groups", "engineer Group");
             //roleUtils.bulkCreateRoles("sample_csv_files/Roles.csv", ';');
+            //System.out.println(roleUtils.getAllRoleMembershipOfAUser("49"));
+            //System.out.println(roleUtils.getRoleKeyByRoleName("engr"));
+            //roleUtils.grantRoleToUser("engr", "49");
+            //roleUtils.revokeRoleFromUser("engr", "49");
         
         } 
         
