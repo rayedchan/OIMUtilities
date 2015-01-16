@@ -1,4 +1,4 @@
-package project.rayedchan.utilities;
+package com.blogspot.oraclestack.utilities;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,7 +9,7 @@ import oracle.iam.platformservice.api.PlatformUtilsService;
 import oracle.iam.platformservice.exception.InvalidCacheCategoryException;
 import oracle.iam.platformservice.exception.PlatformServiceException;
 import oracle.iam.platformservice.vo.JarElement;
-import project.rayedchan.constants.JarElementType;;
+import com.blogspot.oraclestack.constants.JarElementType;;
 
 /**
  * This class contain methods that have the same functionality as the out of the box 

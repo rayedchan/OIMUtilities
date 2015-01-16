@@ -1,4 +1,4 @@
-package project.rayedchan.services;
+package com.blogspot.oraclestack.services;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,7 +72,7 @@ public class OracleIdentityManagerClient
         }
 
         // Create an instance of OIMClient with OIM environment information 
-        Hashtable env = new Hashtable();
+        Hashtable<String, String> env = new Hashtable<String, String>();
         env.put(OIMClient.JAVA_NAMING_FACTORY_INITIAL, factoryInitialType);
         env.put(OIMClient.JAVA_NAMING_PROVIDER_URL, oimProviderURL);
         this.oimClient = new OIMClient(env);
@@ -92,9 +92,9 @@ public class OracleIdentityManagerClient
      */
     public void logout()
     {
-        if(oimClient != null)
+        if(this.oimClient != null)
         {
-            oimClient.logout();
+            this.oimClient.logout();
             logger.log(ODLLevel.TRACE, "Logout user from OIMClient.");
         }
     }
@@ -107,7 +107,7 @@ public class OracleIdentityManagerClient
     public void test() throws AccessDeniedException, UserSearchException
     {        
         // Lookup User Manager service
-        UserManager usermgr = oimClient.getService(UserManager.class);
+        UserManager usermgr = this.oimClient.getService(UserManager.class);
         
         // Only fetch attributes defined in HashSet 
         HashSet attrQuery = new HashSet();

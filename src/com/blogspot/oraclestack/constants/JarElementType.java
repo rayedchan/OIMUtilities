@@ -1,4 +1,4 @@
-package project.rayedchan.constants;
+package com.blogspot.oraclestack.constants;
 
 /**
  * Represents all the possible jar types for the UploadJars.sh utility.

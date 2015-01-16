@@ -1,4 +1,4 @@
-package project.rayedchan.testdriver;
+package com.blogspot.oraclestack.testdriver;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -11,10 +11,10 @@ import oracle.iam.identity.exception.UserSearchException;
 import oracle.iam.platform.OIMClient;
 import oracle.iam.platform.authz.exception.AccessDeniedException;
 import oracle.iam.platformservice.exception.InvalidCacheCategoryException;
-import project.rayedchan.constants.JarElementType;
-import project.rayedchan.services.OracleIdentityManagerClient;
-import project.rayedchan.utilities.PlatformServiceUtilities;
-import project.rayedchan.utilities.RoleUtilities;
+import com.blogspot.oraclestack.constants.JarElementType;
+import com.blogspot.oraclestack.services.OracleIdentityManagerClient;
+import com.blogspot.oraclestack.utilities.PlatformServiceUtilities;
+import com.blogspot.oraclestack.utilities.RoleUtilities;
 
 /**
  * Used for testing purposes.
