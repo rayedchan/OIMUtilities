@@ -14,6 +14,7 @@ import oracle.iam.platformservice.exception.InvalidCacheCategoryException;
 import com.blogspot.oraclestack.constants.JarElementType;
 import com.blogspot.oraclestack.services.OracleIdentityManagerClient;
 import com.blogspot.oraclestack.utilities.PlatformServiceUtilities;
+import com.blogspot.oraclestack.utilities.PluginRegistration;
 import com.blogspot.oraclestack.utilities.RoleUtilities;
 
 /**
@@ -24,8 +25,8 @@ public class TestDriver
 {
     // Adjust constant variables according to you OIM environment
     public static final String OIM_HOSTNAME = "localhost";
-    public static final String OIM_PORT = "14001"; // For SSL, use 14001; For non-SSL, use 14000
-    public static final String OIM_PROVIDER_URL = "t3s://"+ OIM_HOSTNAME + ":" + OIM_PORT; // For SSL, use t3s protocol; For non-SSL, use t3 protocol
+    public static final String OIM_PORT = "14000"; // For SSL, use 14001; For non-SSL, use 14000
+    public static final String OIM_PROVIDER_URL = "t3://"+ OIM_HOSTNAME + ":" + OIM_PORT; // For SSL, use t3s protocol; For non-SSL, use t3 protocol
     public static final String AUTHWL_PATH = "lib/config/authwl.conf";
     public static final String APPSERVER_TYPE = "wls";
     public static final String FACTORY_INITIAL_TYPE = "weblogic.jndi.WLInitialContextFactory";
@@ -44,7 +45,7 @@ public class TestDriver
         try 
         {
             // Test OIMClient by logging in with a user and querying all the Identities
-            oimClientWrapper = new OracleIdentityManagerClient(OIM_ADMIN_USERNAME, OIM_ADMIN_PASSWORD, AUTHWL_PATH, APPSERVER_TYPE, FACTORY_INITIAL_TYPE, OIM_PROVIDER_URL, true, TRUST_KEYSTORE_FOR_SSL);
+            oimClientWrapper = new OracleIdentityManagerClient(OIM_ADMIN_USERNAME, OIM_ADMIN_PASSWORD, AUTHWL_PATH, APPSERVER_TYPE, FACTORY_INITIAL_TYPE, OIM_PROVIDER_URL, false, TRUST_KEYSTORE_FOR_SSL);
             //oimClientWrapper.test();
             OIMClient oimClient = oimClientWrapper.getOIMClient();
             
@@ -69,7 +70,15 @@ public class TestDriver
             //System.out.println(roleUtils.getRoleKeyByRoleName("engr"));
             //roleUtils.grantRoleToUser("engr", "49");
             //roleUtils.revokeRoleFromUser("engr", "49");
-        
+            
+            String pluginZip = "/home/oracle/NetBeansProjects/OIMUtilities/Resources/Plugins/ConditionalPostEH/ConditionalPostProcessEH.zip";
+            PluginRegistration pluginReg = new PluginRegistration(oimClient);
+            //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess", "1.0");
+            pluginReg.registerOIMPlugin(pluginZip);
+            
+            //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.TelephoneNumberValidationEH", "1.0");
+            //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.SetMiddleNamePreprocessEH", "1.0");
+            
         } 
         
         catch (Exception ex) 

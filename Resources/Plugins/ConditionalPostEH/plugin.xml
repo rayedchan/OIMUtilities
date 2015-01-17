@@ -1,0 +1,5 @@
+<oimplugins xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <plugins pluginpoint="oracle.iam.platform.kernel.spi.EventHandler">
+         <plugin pluginclass="com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess" version="1.0" name="ConditionalEventHandlerPostProcess"/>  
+</plugins>         
+</oimplugins>
