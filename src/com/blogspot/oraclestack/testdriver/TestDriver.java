@@ -73,7 +73,7 @@ public class TestDriver
             
             String pluginZip = "/home/oracle/NetBeansProjects/OIMUtilities/Resources/Plugins/ConditionalPostEH/ConditionalPostProcessEH.zip";
             PluginRegistration pluginReg = new PluginRegistration(oimClient);
-            //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess", "1.0");
+            pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess", "1.0");
             pluginReg.registerOIMPlugin(pluginZip);
             
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.TelephoneNumberValidationEH", "1.0");

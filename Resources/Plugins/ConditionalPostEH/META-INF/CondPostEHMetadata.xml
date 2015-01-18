@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <eventhandlers xmlns="http://www.oracle.com/schema/oim/platform/kernel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.oracle.com/schema/oim/platform/kernel orchestration-handlers.xsd"> 
-  <action-handler
-          entity-type="User"
-             operation="CREATE"
-                class="com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess"
-                   name="ConditionalEventHandlerPostProcess"
-                      stage="postprocess" order="1050"
-                         sync="TRUE"/> 
-                 </eventhandlers>
+  <action-handler 
+     entity-type="User"
+     operation="CREATE"
+     class="com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess"
+     name="ConditionalEventHandlerPostProcess"
+     stage="postprocess" order="1050"
+     sync="TRUE"/> 
+</eventhandlers>

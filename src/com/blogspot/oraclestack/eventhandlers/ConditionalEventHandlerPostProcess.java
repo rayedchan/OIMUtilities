@@ -19,10 +19,12 @@ import oracle.iam.platform.kernel.vo.Orchestration;
  * Conditional Post Process Event Handler
  * The ConditionalEventHandler interface has a method called isApplicable(), which
  * determines whether the event handler should be executed in the current context.
- * In this example, this event handler is triggered on the creation of a user of type Employee.
- * The post process event handler populates the Employee Number attribute with USR_KEY.
+ * In this example, the event handler is triggered on the creation of a user who is an employee.
+ * The post process event handler populates the Employee Number attribute with USR_KEY if the condition
+ * is satisfied.
  * 
- * Side Note: Validation and preprocess event handlers can also be conditional. 
+ * Side Note: Validation and preprocess event handlers can also be conditional. Inspect 
+ * the ORCHEVENTS table in the OIM Schema to see the trigger sequences of the event handler.
  * 
  * @author rayedchan
  */
@@ -33,7 +35,7 @@ public class ConditionalEventHandlerPostProcess implements ConditionalEventHandl
     @Override
     public EventResult execute(long l, long l1, Orchestration o) 
     {
-        LOGGER.log(ODLLevel.NOTIFICATION, "Enter execute() with parameters: [{0}], [{1}], [{2}]", new Object[]{l, l1, o});
+        LOGGER.log(ODLLevel.NOTIFICATION, "Enter execute() V1 with parameters: [{0}], [{1}], [{2}]", new Object[]{l, l1, o});
         
         try
         {
