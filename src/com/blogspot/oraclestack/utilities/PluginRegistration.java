@@ -13,7 +13,7 @@ import oracle.iam.platformservice.exception.PlatformServiceAccessDeniedException
 
 /**
  * Registers or unregisters an OIM Plug-in.
- * @author oracle
+ * @author rayedchan
  */
 public class PluginRegistration 
 {
@@ -83,8 +83,10 @@ public class PluginRegistration
     {
         // Remove single plugin
         this.platformService.unRegisterPlugin(pluginId, pluginVersion);
+        System.out.println("Successfully unregistered plugin.");
 
         // Purge Cache;
         this.platUtilOps.purgeCache("ALL");
+        System.out.println("Cache Purged.");
     }
 }

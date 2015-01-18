@@ -328,7 +328,6 @@ public class RoleUtilities
         return roleMgrOps.getUserMemberships(userKey, getIndirectAndDirectRoleMembership);
     }
     
-    
     /**
      * Get the role key based on the role name.
      * @param roleName  Name of the role (UGP.UGP_NAME)
@@ -345,7 +344,6 @@ public class RoleUtilities
         Role role = roleMgrOps.getDetails(RoleManagerConstants.RoleAttributeName.NAME.getId(), roleName, retAttrs); // Search by role name attribute which is unique
         return Long.parseLong(role.getEntityId());
     }
-    
     
     /**
      * Assign a role to a user.
@@ -366,7 +364,6 @@ public class RoleUtilities
         roleMgrOps.grantRole(roleKey, usrKeys);
         logger.log(ODLLevel.NOTIFICATION, "Granted role successfully: Role Key = {0}, Role Name = {1}, User Key = {2},", new Object[]{roleKey, roleName, userKey});
     }
-    
     
     /**
      * Removes a role from a user.

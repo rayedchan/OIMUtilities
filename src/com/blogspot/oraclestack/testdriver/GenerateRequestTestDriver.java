@@ -3,8 +3,6 @@ package com.blogspot.oraclestack.testdriver;
 import com.blogspot.oraclestack.services.OracleIdentityManagerClient;
 import com.blogspot.oraclestack.utilities.GenerateRequestUtilities;
 import java.util.HashMap;
-import oracle.iam.api.OIMService;
-import oracle.iam.identity.usermgmt.api.UserManager;
 import oracle.iam.platform.OIMClient;
 import oracle.iam.vo.OperationResult;
 
@@ -34,12 +32,8 @@ public class GenerateRequestTestDriver
             oimClientWrapper = new OracleIdentityManagerClient(OIM_ADMIN_USERNAME, OIM_ADMIN_PASSWORD, AUTHWL_PATH, APPSERVER_TYPE, FACTORY_INITIAL_TYPE, OIM_PROVIDER_URL, false, null);
             OIMClient oimClient = oimClientWrapper.getOIMClient();
             
-            // Get OIM services
-            OIMService oimService = oimClient.getService(OIMService.class);
-            UserManager usrMgrOps = oimClient.getService(UserManager.class);
-            
             // Instantiate Util Object
-            GenerateRequestUtilities genReqUtil = new GenerateRequestUtilities(oimService, usrMgrOps);
+            GenerateRequestUtilities genReqUtil = new GenerateRequestUtilities(oimClient);
             
             // Input variables
             String userLogin = "JCICCHELLA";

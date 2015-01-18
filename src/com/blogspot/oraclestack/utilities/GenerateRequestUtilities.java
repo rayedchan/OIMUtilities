@@ -13,6 +13,7 @@ import oracle.iam.identity.exception.UserLookupException;
 import oracle.iam.identity.usermgmt.api.UserManager;
 import oracle.iam.identity.usermgmt.api.UserManagerConstants;
 import oracle.iam.identity.usermgmt.vo.User;
+import oracle.iam.platform.OIMClient;
 import oracle.iam.platform.utils.vo.OIMType;
 import oracle.iam.request.vo.Beneficiary;
 import oracle.iam.request.vo.RequestBeneficiaryEntity;
@@ -42,10 +43,10 @@ public class GenerateRequestUtilities
      * Constructor
      * @param oimService OIMService 
      */
-    public GenerateRequestUtilities(OIMService oimService, UserManager usrMgrOps)
+    public GenerateRequestUtilities(OIMClient oimClient)
     {
-        this.oimService = oimService;
-        this.usrMgrOps = usrMgrOps;
+        this.oimService = oimClient.getService(OIMService.class);
+        this.usrMgrOps = oimClient.getService(UserManager.class);
     }
     
     /**
