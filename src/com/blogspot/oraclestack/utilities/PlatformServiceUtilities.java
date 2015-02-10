@@ -86,8 +86,55 @@ public class PlatformServiceUtilities
         Set<JarElement> jarElements = new HashSet<JarElement>(); 
         jarElements.add(jarElement);
         
-        // Service to remoce jar from OIM Schema
+        // Service to remove jar from OIM Schema
         platformUtilsServiceOps.deleteJars(jarElements);
         logger.log(ODLLevel.NOTIFICATION, "Successfully deleted jar: Type = {0}, Name = {1}", new Object[]{jarType.name(),jarName});
+    }
+    
+     /**
+     * Updates a single jar file to database. UPDATE_ON and UPDATED_BY columns in the OIMHOME_JARS table will be updated with current date
+     * to indicate the jar is successfully updated. Same functionality as the "UpdateJars.sh" script 
+     * which is located in "$MW_HOME/Oracle_IDM1/server/bin/" directory.
+     * @param jarType   The type of jar to be updated.
+     * @param jarPath   The absolute path to the jar file that is being updated. The jar name must exist in the database.
+     */
+    public void updateJar(JarElementType jarType, String jarPath) throws PlatformServiceException
+    {
+        // Build a jar element containing path and type data
+        JarElement jarElement = new JarElement();
+        jarElement.setType(jarType.name());
+        jarElement.setPath(jarPath);
+        
+        // Build a set object to put jar element
+        Set<JarElement> jarElements = new HashSet<JarElement>(); 
+        jarElements.add(jarElement);
+        
+        // Service to update jar to OIM Schema
+        platformUtilsServiceOps.updateJars(jarElements);
+        logger.log(ODLLevel.NOTIFICATION, "Successfully updated jar: Type = {0}, Path = {1}", new Object[]{jarType.name(), jarPath});
+    }
+    
+    /**
+     * Download a jar from the database. Same functionality as the "DownloadJars.sh" script 
+     * which is located in "$MW_HOME/Oracle_IDM1/server/bin/" directory.
+     * @param jarType   The type of jar to be downloaded.
+     * @param jarName   The name of the jar in the backend to be downloaded. Use the value in OIM.OIMHOME_JARS.OJ_NAME column.
+     * @throws PlatformServiceException 
+     */
+    public void downloadJar(JarElementType jarType, String jarName, String destinationPath) throws PlatformServiceException
+    {   
+        // Build a jar element containing path and type data
+        JarElement jarElement = new JarElement();
+        jarElement.setType(jarType.name());
+        jarElement.setName(jarName);
+        jarElement.setPath(destinationPath);
+        
+        // Build a set object to put jar element
+        Set<JarElement> jarElements = new HashSet<JarElement>(); 
+        jarElements.add(jarElement);
+        
+        // Service to download jar from OIM Schema
+        platformUtilsServiceOps.downloadJars(jarElements);
+        logger.log(ODLLevel.NOTIFICATION, "Successfully downloaded jar: Type = {0}, Name = {1}", new Object[]{jarType.name(),jarName});
     }
 }

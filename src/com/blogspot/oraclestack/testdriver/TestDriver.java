@@ -49,16 +49,14 @@ public class TestDriver
             //oimClientWrapper.test();
             OIMClient oimClient = oimClientWrapper.getOIMClient();
             
-            
             // Test platform service utilities
             PlatformServiceUtilities platServUtil = new PlatformServiceUtilities(oimClient);
-            //platServUtil.uploadJar(JarElementType.ThirdParty, "/home/oracle/Desktop/OIMUtilities/dist/OIMUtilities.jar");
+            // platServUtil.uploadJar(JarElementType.JavaTasks, "/home/oracle/Desktop/OIMUtilities/dist/OIMUtilities.jar");
             //platServUtil.deleteJar(JarElementType.ThirdParty, "OIMUtilities.jar");
-            //platServUtil.purgeCache();
-            
+            platServUtil.purgeCache();
             
             // Test Role service utilities
-            RoleUtilities roleUtils = new RoleUtilities(oimClient);
+            //RoleUtilities roleUtils = new RoleUtilities(oimClient);
             //System.out.println(roleUtils.getAllRoleCategories());
             //roleUtils.createRoleCategory("Groups", "Maps to LDAP groups.");
             //roleUtils.bulkCreateRoleCategories("sample_csv_files/RoleCategories.csv", ';');
@@ -71,11 +69,11 @@ public class TestDriver
             //roleUtils.grantRoleToUser("engr", "49");
             //roleUtils.revokeRoleFromUser("engr", "49");
             
-            String pluginZip = "/home/oracle/NetBeansProjects/OIMUtilities/Resources/Plugins/ConditionalPostEH/ConditionalPostProcessEH.zip";
-            PluginRegistration pluginReg = new PluginRegistration(oimClient);
-            pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess", "1.0");
-            pluginReg.registerOIMPlugin(pluginZip);
-            
+            // Plugin Registation
+            //String pluginZip = "/home/oracle/NetBeansProjects/OIMUtilities/Resources/Plugins/ConditionalPostEH/ConditionalPostProcessEH.zip";
+            //PluginRegistration pluginReg = new PluginRegistration(oimClient);
+            //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess", "1.0");
+            //pluginReg.registerOIMPlugin(pluginZip);
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.TelephoneNumberValidationEH", "1.0");
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.SetMiddleNamePreprocessEH", "1.0");
             
