@@ -1,5 +1,6 @@
 package com.blogspot.oraclestack.testdriver;
 
+import com.blogspot.oraclestack.constants.JarElementType;
 import com.blogspot.oraclestack.services.OracleIdentityManagerClient;
 import com.blogspot.oraclestack.utilities.PlatformServiceUtilities;
 import oracle.iam.platform.OIMClient;
@@ -39,7 +40,7 @@ public class JarUtilityTestDriver
             // platServUtil.uploadJar(JarElementType.JavaTasks, JAR_PATH); // Specify JAR type and path of JAR on machine where OIM is running
             
             // Update an existing JAR in OIM
-            //platServUtil.updateJar(JarElementType.JavaTasks, JAR_PATH);
+            platServUtil.updateJar(JarElementType.JavaTasks, JAR_PATH);
             
             // Remove a JAR from OIM
             // platServUtil.deleteJar(JarElementType.JavaTasks, "OIMUtilities.jar");
