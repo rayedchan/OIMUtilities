@@ -36,7 +36,7 @@ public class PrepopulateAdapters
      */
     public static String calculateUserTypeCode(String userType)
     {
-        String result = "";
+        String result;
         LOGGER.log(ODLLevel.TRACE, "Enter calculateUserTypeCode() with parameter: [ User Type: [{0}]]", new Object[]{userType});
         
         if("Full-Time".equals(userType))
@@ -49,7 +49,7 @@ public class PrepopulateAdapters
             result = "2000";
         }
         
-        else if("Consultant".equalsIgnoreCase(userType))
+        else if("Consultant".equals(userType))
         {
             result = "3000";
         }
@@ -61,5 +61,16 @@ public class PrepopulateAdapters
         
         LOGGER.log(ODLLevel.TRACE, "Result: {0}", new Object[]{result});
         return result;
+    }
+    
+    /**
+     * Populates a String form field.
+     * @param var   Variable defined in configuration in design console
+     * @return var
+     */
+    public static String populateStringFormField(String var)
+    {
+        LOGGER.log(ODLLevel.TRACE, "Enter populateStringFormField() with parameter: [ Value: [{0}]]", new Object[]{var});
+        return var;
     }
 }
