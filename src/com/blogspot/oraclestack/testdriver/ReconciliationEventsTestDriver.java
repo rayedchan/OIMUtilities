@@ -1,6 +1,5 @@
 package com.blogspot.oraclestack.testdriver;
 
-import com.blogspot.oraclestack.services.OracleIdentityManagerClient;
 import com.blogspot.oraclestack.utilities.ReconciliationEvents;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -23,8 +22,8 @@ public class ReconciliationEventsTestDriver
     public static final String OIM_ADMIN_PASSWORD = "Password1";
     
     // Adjust input
-    public static final String INPUT_RESOURCE_OBJECT = "DBAT User";
-    public static final String INPUT_IT_RESOURCE = "DBAT";
+    public static final String INPUT_RESOURCE_OBJECT = "AD User Trusted";
+    public static final String INPUT_IT_RESOURCE = "Active Directory";
     
     public static void main(String[] args) throws Exception
     {
@@ -52,11 +51,23 @@ public class ReconciliationEventsTestDriver
             
             // Stage reconciliation data; maps to reconciliation field on resource object
             HashMap<String,Object> reconData = new HashMap<String,Object>(); // Key = Recon Field Name, Value = data
-            reconData.put("Unique Id", "DDUMA"); // __UID__ attribute
+            
+            // DBAT Target
+            /*reconData.put("Unique Id", "DDUMA"); // __UID__ attribute
             reconData.put("User Id", "DDUMA"); // __NAME__ attribute
             reconData.put("Status", "Enabled"); // __ENABLE__
             reconData.put("IT Resource Name", INPUT_IT_RESOURCE);
-            reconData.put("Middle Name", "D"); 
+            reconData.put("Middle Name", "J"); */
+            
+            // AD Trusted
+            reconData.put("objectGUID", "NTAYLOR"); // __UID__ attribute
+            reconData.put("User Id", "NTAYLOR"); // __NAME__ attribute
+            reconData.put("TrustedStatus", "Disabled"); // __ENABLE__
+            reconData.put("Last Name", "Taylor"); 
+            reconData.put("Employee Type", "Full-Time"); 
+            reconData.put("Organization", "Xellerate Users"); 
+            reconData.put("Middle Name", "A"); 
+            reconData.put("First Name", "Nick"); 
             
             // Create a reconciliation event and process it
             reconEvtUtil.makeReconciliationEvent(INPUT_RESOURCE_OBJECT, reconData);
