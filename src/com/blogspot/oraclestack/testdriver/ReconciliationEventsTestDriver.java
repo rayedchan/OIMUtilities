@@ -1,6 +1,7 @@
 package com.blogspot.oraclestack.testdriver;
 
 import com.blogspot.oraclestack.utilities.ReconciliationEvents;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import oracle.iam.platform.OIMClient;
@@ -22,8 +23,8 @@ public class ReconciliationEventsTestDriver
     public static final String OIM_ADMIN_PASSWORD = "Password1";
     
     // Adjust input
-    public static final String INPUT_RESOURCE_OBJECT = "AD User Trusted";
-    public static final String INPUT_IT_RESOURCE = "Active Directory";
+    public static final String INPUT_RESOURCE_OBJECT = "DBAT User";
+    public static final String INPUT_IT_RESOURCE = "DBAT";
     
     public static void main(String[] args) throws Exception
     {
@@ -49,28 +50,53 @@ public class ReconciliationEventsTestDriver
             // Test reconciliation event utility
             ReconciliationEvents reconEvtUtil = new ReconciliationEvents(oimClient);
             
-            // Stage reconciliation data; maps to reconciliation field on resource object
+            // Stage reconciliation parent data; maps to reconciliation field on resource object
             HashMap<String,Object> reconData = new HashMap<String,Object>(); // Key = Recon Field Name, Value = data
             
+            // Stage reconciliation child data
+            HashMap<String,ArrayList<HashMap<String,Object>>> childReconData = new HashMap<String,ArrayList<HashMap<String,Object>>>(); // {Key = Child Recon Field Map Name, Value = {Key = Child Recon Field Name, Value = data}} 
+            ArrayList<HashMap<String,Object>> childRoleEntries = new ArrayList<HashMap<String,Object>>();
+            HashMap<String,Object> childTableRoleData1 = new HashMap<String, Object>();
+            HashMap<String,Object> childTableRoleData2 = new HashMap<String, Object>();
+            ArrayList<HashMap<String,Object>> childGroupEntries = new ArrayList<HashMap<String,Object>>();
+            HashMap<String,Object> childTableGroupData1 = new HashMap<String, Object>();
+            HashMap<String,Object> childTableGroupData2 = new HashMap<String, Object>();
+            
             // DBAT Target
-            /*reconData.put("Unique Id", "DDUMA"); // __UID__ attribute
+            reconData.put("Unique Id", "DDUMA"); // __UID__ attribute
             reconData.put("User Id", "DDUMA"); // __NAME__ attribute
             reconData.put("Status", "Enabled"); // __ENABLE__
             reconData.put("IT Resource Name", INPUT_IT_RESOURCE);
-            reconData.put("Middle Name", "J"); */
+            reconData.put("Middle Name", "B"); 
             
-            // AD Trusted
-            reconData.put("objectGUID", "NTAYLOR"); // __UID__ attribute
+            childTableRoleData1.put("Role", "Engineer");
+            childTableRoleData2.put("Role", "Developer");
+            childRoleEntries.add(childTableRoleData1);
+            childRoleEntries.add(childTableRoleData2);
+            
+            childTableGroupData1.put("Group Name", "Fresh");
+            childTableGroupData2.put("Group Name", "Rubix");
+            childGroupEntries.add(childTableGroupData1);
+            childGroupEntries.add(childTableGroupData2);
+            
+            childReconData.put("RO", childRoleEntries);
+            childReconData.put("GRP", childGroupEntries);
+            
+            // AD Trusted; No IT Resource needed
+            /*reconData.put("objectGUID", "NTAYLOR"); // __UID__ attribute
             reconData.put("User Id", "NTAYLOR"); // __NAME__ attribute
             reconData.put("TrustedStatus", "Disabled"); // __ENABLE__
             reconData.put("Last Name", "Taylor"); 
             reconData.put("Employee Type", "Full-Time"); 
             reconData.put("Organization", "Xellerate Users"); 
             reconData.put("Middle Name", "A"); 
-            reconData.put("First Name", "Nick"); 
+            reconData.put("First Name", "Nick");*/
             
             // Create a reconciliation event and process it
-            reconEvtUtil.makeReconciliationEvent(INPUT_RESOURCE_OBJECT, reconData);
+            //reconEvtUtil.makeReconciliationEvent(INPUT_RESOURCE_OBJECT, reconData);
+            
+            // Create a reconciliation event and process it
+            reconEvtUtil.makeReconciliationEventWithChildData(INPUT_RESOURCE_OBJECT, reconData, childReconData);
         }
         
         finally
