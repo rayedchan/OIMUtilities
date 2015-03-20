@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eventhandlers xmlns="http://www.oracle.com/schema/oim/platform/kernel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.oracle.com/schema/oim/platform/kernel orchestration-handlers.xsd"> 
+  <action-handler 
+     entity-type="User"
+     operation="MODIFY"
+     class="com.blogspot.oraclestack.eventhandlers.BulkModifyUserEHPostProcess"
+     name="BulkModifyUserEHPostProcess"
+     stage="postprocess" order="1050"
+     sync="TRUE"/> 
+</eventhandlers>

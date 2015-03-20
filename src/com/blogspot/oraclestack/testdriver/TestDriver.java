@@ -70,10 +70,10 @@ public class TestDriver
             //roleUtils.revokeRoleFromUser("engr", "49");
             
             // Plugin Registation
-            //String pluginZip = "/home/oracle/NetBeansProjects/OIMUtilities/Resources/Plugins/ConditionalPostEH/ConditionalPostProcessEH.zip";
-            //PluginRegistration pluginReg = new PluginRegistration(oimClient);
+            String pluginZip = "/home/oracle/NetBeansProjects/OIMUtilities/Resources/Plugins/BulkUserModifyEH/BulkUserModifyEH.zip";
+            PluginRegistration pluginReg = new PluginRegistration(oimClient);
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess", "1.0");
-            //pluginReg.registerOIMPlugin(pluginZip);
+            pluginReg.registerOIMPlugin(pluginZip);
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.TelephoneNumberValidationEH", "1.0");
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.SetMiddleNamePreprocessEH", "1.0");
             

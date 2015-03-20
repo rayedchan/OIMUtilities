@@ -1,0 +1,287 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<logging_configuration>
+ <log_handlers>
+ <log_handler name='BulkUserModifyEH' level='TRACE:32' class='oracle.core.ojdl.logging.ODLHandlerFactory'>
+     <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/BulkUserModifyEH.log'/>
+         <property name='useThreadName' value='true'/>
+             <property name='maxFileSize' value='5242880'/>
+                 <property name='maxLogSize' value='52428800'/>
+                     <property name='encoding' value='UTF-8'/>
+                       </log_handler>
+ <log_handler name='Adapters' level='TRACE:32' class='oracle.core.ojdl.logging.ODLHandlerFactory'>
+     <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/Adapters.log'/>
+         <property name='useThreadName' value='true'/>
+             <property name='maxFileSize' value='5242880'/>
+                 <property name='maxLogSize' value='52428800'/>
+                     <property name='encoding' value='UTF-8'/>
+                       </log_handler>  
+ <log_handler name='ConditionalPostEH' level='TRACE:32' class='oracle.core.ojdl.logging.ODLHandlerFactory'>
+    <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/ConditionalPostEH.log'/>
+    <property name='useThreadName' value='true'/>
+    <property name='maxFileSize' value='5242880'/>
+    <property name='maxLogSize' value='52428800'/>
+    <property name='encoding' value='UTF-8'/>
+  </log_handler>
+  <log_handler name='TelephoneNumberValidationEH' level='TRACE:32' class='oracle.core.ojdl.logging.ODLHandlerFactory'>
+    <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/TelephoneNumberValidationEH.log'/>
+    <property name='useThreadName' value='true'/>
+    <property name='maxFileSize' value='5242880'/>
+    <property name='maxLogSize' value='52428800'/>
+    <property name='encoding' value='UTF-8'/>
+  </log_handler>
+  <log_handler name='CustomPasswordReset' level='TRACE:32' class='oracle.core.ojdl.logging.ODLHandlerFactory'>
+    <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/CustomPasswordReset.log'/>
+    <property name='useThreadName' value='true'/>
+    <property name='maxFileSize' value='5242880'/>
+    <property name='maxLogSize' value='52428800'/>
+    <property name='encoding' value='UTF-8'/>
+  </log_handler>
+  <log_handler name='SetMiddleNamePreprocessEH' level='TRACE:32' class='oracle.core.ojdl.logging.ODLHandlerFactory'>
+    <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/SetMiddleNamePreProcessEH.log'/>
+    <property name='useThreadName' value='true'/>
+    <property name='maxFileSize' value='5242880'/>
+    <property name='maxLogSize' value='52428800'/>
+    <property name='encoding' value='UTF-8'/>
+  </log_handler>
+  <log_handler name='console-handler' class='oracle.core.ojdl.logging.ConsoleHandler' level='WARNING:32' formatter='oracle.core.ojdl.weblogic.ConsoleFormatter'/>
+  <log_handler name='odl-handler' class='oracle.core.ojdl.logging.ODLHandlerFactory' filter='oracle.dfw.incident.IncidentDetectionLogFilter'>
+   <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/${weblogic.Name}-diagnostic.log'/>
+   <property name='maxFileSize' value='10485760'/>
+   <property name='maxLogSize' value='104857600'/>
+   <property name='encoding' value='UTF-8'/>
+   <property name='useThreadName' value='true'/>
+   <property name='supplementalAttributes' value='J2EE_APP.name,J2EE_MODULE.name,WEBSERVICE.name,WEBSERVICE_PORT.name,composite_instance_id,component_instance_id,composite_name,component_name,DSID'/>
+  </log_handler>
+  <log_handler name='wls-domain' class='oracle.core.ojdl.weblogic.DomainLogHandler' level='WARNING'/>
+  <log_handler name='owsm-message-handler' class='oracle.core.ojdl.logging.ODLHandlerFactory'>
+   <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/owsm/msglogging'/>
+   <property name='maxFileSize' value='10485760'/>
+   <property name='maxLogSize' value='104857600'/>
+   <property name='encoding' value='UTF-8'/>
+   <property name='supplementalAttributes' value='J2EE_APP.name,J2EE_MODULE.name,WEBSERVICE.name,WEBSERVICE_PORT.name'/>
+  </log_handler>
+  <log_handler name='em-log-handler' class='oracle.core.ojdl.logging.ODLHandlerFactory' level='NOTIFICATION:32' filter='oracle.dfw.incident.IncidentDetectionLogFilter'>
+   <property name='path' value='${domain.home}/servers/${weblogic.Name}/sysman/log/emoms.log'/>
+   <property name='format' value='ODL-Text'/>
+   <property name='useThreadName' value='true'/>
+   <property name='maxFileSize' value='5242880'/>
+   <property name='maxLogSize' value='52428800'/>
+   <property name='encoding' value='UTF-8'/>
+  </log_handler>
+  <log_handler name='em-trc-handler' class='oracle.core.ojdl.logging.ODLHandlerFactory' level='TRACE:32'>
+   <property name='logreader:' value='off'/>
+   <property name='path' value='${domain.home}/servers/${weblogic.Name}/sysman/log/emoms.trc'/>
+   <property name='format' value='ODL-Text'/>
+   <property name='useThreadName' value='true'/>
+   <property name='locale' value='en'/>
+   <property name='maxFileSize' value='5242880'/>
+   <property name='maxLogSize' value='52428800'/>
+   <property name='encoding' value='UTF-8'/>
+  </log_handler>
+  <log_handler name='soa-tracking-trc-handler' class='oracle.core.ojdl.logging.ODLHandlerFactory'>
+   <property name='locale' value='en'/>
+   <property name='supplementalAttributes' value='J2EE_APP.name,J2EE_MODULE.name,WEBSERVICE.name,WEBSERVICE_PORT.name,composite_instance_id,component_instance_id,composite_name,component_name,SOA.toplink.session_name,SOA.logging.category,SOA.call_origin,SOA.call_origin_category'/>
+   <property name='encoding' value='UTF-8'/>
+   <property name='path' value='${domain.home}/servers/${weblogic.Name}/logs/${weblogic.Name}-soa-tracking.trc'/>
+   <property name='format' value='ODL-Text'/>
+   <property name='useThreadName' value='true'/>
+   <property name='maxFileSize' value='5242880'/>
+   <property name='maxLogSize' value='52428800'/>
+  </log_handler>
+ </log_handlers>
+ <loggers>
+  <logger name='' level='TRACE:32'>
+   <handler name='odl-handler'/>
+   <handler name='wls-domain'/>
+   <handler name='console-handler'/>
+  </logger>
+    <logger name="com.blogspot.oraclestack.adapters.PrepopulateAdapters" level="TRACE:32" useParentHandlers="false">
+        <handler name="Adapters"/>
+          </logger>
+    <logger name="BULK_MODIFY_USER" level="TRACE:32" useParentHandlers="false">
+        <handler name="BulkUserModifyEH"/>
+          </logger>
+  <logger name="com.blogspot.oraclestack.eventhandlers.TelephoneNumberValidationEH" level="TRACE:32" useParentHandlers="false">
+    <handler name="TelephoneNumberValidationEH"/>
+  </logger>
+  <logger name="com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess" level="TRACE:32" useParentHandlers="false">
+    <handler name="ConditionalPostEH"/>
+  </logger>
+  <logger name="oracle.iam.ui.custom.CustomPasswordReset" level="TRACE:32" useParentHandlers="false">
+    <handler name="CustomPasswordReset"/>
+  </logger>
+  <logger name="com.blogspot.oraclestack.eventhandlers.SetMiddleNamePreprocessEH" level="TRACE:32" useParentHandlers="false">
+    <handler name="SetMiddleNamePreprocessEH"/>
+  </logger>
+  <logger name="com.blogspot.oraclestack.test.Superclass" level="TRACE:32" useParentHandlers="false">
+    <handler name="SetMiddleNamePreprocessEH"/>
+  </logger>
+  <logger name="com.blogspot.oraclestack.test.Subclass" level="TRACE:32" useParentHandlers="false">
+    <handler name="SetMiddleNamePreprocessEH"/>
+  </logger>
+  <logger name="com.blogspot.oraclestack.test.Util" level="TRACE:32" useParentHandlers="false">
+    <handler name="SetMiddleNamePreprocessEH"/>
+  </logger>
+  <logger name='oracle' level='NOTIFICATION:1'/>
+  <logger name='oracle.adf'/>
+  <logger name='oracle.adf.desktopintegration'/>
+  <logger name='oracle.adf.faces'/>
+  <logger name='oracle.adf.controller'/>
+  <logger name='oracle.adfinternal'/>
+  <logger name='oracle.adfinternal.controller'/>
+  <logger name='oracle.jbo'/>
+  <logger name='oracle.adfdt'/>
+  <logger name='oracle.adfdtinternal'/>
+  <logger name='oracle.bam'/>
+  <logger name='oracle.bam.adapter'/>
+  <logger name='oracle.bam.common'/>
+  <logger name='oracle.bam.system'/>
+  <logger name='oracle.bam.middleware'/>
+  <logger name='oracle.bam.adc.security'/>
+  <logger name='oracle.bam.common.security'/>
+  <logger name='oracle.bam.adc.ejb.BamAdcServerBean'/>
+  <logger name='oracle.bam.reportcache.ejb.ReportCacheServerBean'/>
+  <logger name='oracle.bam.eventengine.ejb.EventEngineServerBean'/>
+  <logger name='oracle.bam.ems.ejb.EMSServerBean'/>
+  <logger name='oracle.bam.adc.api'/>
+  <logger name='oracle.bam.adc'/>
+  <logger name='oracle.bam.eventengine'/>
+  <logger name='oracle.bam.ems'/>
+  <logger name='oracle.bam.webservices'/>
+  <logger name='oracle.bam.web'/>
+  <logger name='oracle.bam.reportcache'/>
+  <logger name='oracle.bpm'/>
+  <logger name='oracle.bpm.analytics'/>
+  <logger name='oracle.integration'/>
+  <logger name='oracle.integration.platform.blocks.cluster'/>
+  <logger name='oracle.integration.platform.blocks.deploy.coordinator'/>
+  <logger name='oracle.integration.platform.blocks.event.saq'/>
+  <logger name='oracle.integration.platform.blocks.java'/>
+  <logger name='oracle.integration.platform.faultpolicy'/>
+  <logger name='oracle.integration.platform.testfwk'/>
+  <logger name='oracle.soa'/>
+  <logger name='oracle.soa.adapter'/>
+  <logger name='oracle.soa.b2b'/>
+  <logger name='oracle.soa.b2b.apptransport'/>
+  <logger name='oracle.soa.b2b.engine'/>
+  <logger name='oracle.soa.b2b.repository'/>
+  <logger name='oracle.soa.b2b.transport'/>
+  <logger name='oracle.soa.b2b.ui'/>
+  <logger name='oracle.soa.bpel'/>
+  <logger name='oracle.soa.bpel.console'/>
+  <logger name='oracle.soa.bpel.engine'/>
+  <logger name='oracle.soa.bpel.engine.activation'/>
+  <logger name='oracle.soa.bpel.engine.agents'/>
+  <logger name='oracle.soa.bpel.engine.bpel'/>
+  <logger name='oracle.soa.bpel.engine.compiler'/>
+  <logger name='oracle.soa.bpel.engine.data'/>
+  <logger name='oracle.soa.bpel.engine.delivery'/>
+  <logger name='oracle.soa.bpel.engine.deployment'/>
+  <logger name='oracle.soa.bpel.engine.dispatch'/>
+  <logger name='oracle.soa.bpel.engine.sensor'/>
+  <logger name='oracle.soa.bpel.engine.translation'/>
+  <logger name='oracle.soa.bpel.engine.ws'/>
+  <logger name='oracle.soa.bpel.engine.xml'/>
+  <logger name='oracle.soa.bpel.entity'/>
+  <logger name='oracle.soa.bpel.jpa'/>
+  <logger name='oracle.soa.bpel.system'/>
+  <logger name='oracle.soa.dvm'/>
+  <logger name='oracle.soa.management.facade.api'/>
+  <logger name='oracle.soa.mediator'/>
+  <logger name='oracle.soa.mediator.common'/>
+  <logger name='oracle.soa.mediator.common.cache'/>
+  <logger name='oracle.soa.mediator.common.error'/>
+  <logger name='oracle.soa.mediator.common.error.recovery'/>
+  <logger name='oracle.soa.mediator.common.message'/>
+  <logger name='oracle.soa.mediator.dispatch'/>
+  <logger name='oracle.soa.mediator.dispatch.resequencer.toplink'/>
+  <logger name='oracle.soa.mediator.filter'/>
+  <logger name='oracle.soa.mediator.instance'/>
+  <logger name='oracle.soa.mediator.management'/>
+  <logger name='oracle.soa.mediator.metadata'/>
+  <logger name='oracle.soa.mediator.monitor'/>
+  <logger name='oracle.soa.mediator.resequencer'/>
+  <logger name='oracle.soa.mediator.resequencer.besteffort'/>
+  <logger name='oracle.soa.mediator.resequencer.fifo'/>
+  <logger name='oracle.soa.mediator.resequencer.standard'/>
+  <logger name='oracle.soa.mediator.service'/>
+  <logger name='oracle.soa.mediator.serviceEngine'/>
+  <logger name='oracle.soa.mediator.transformation'/>
+  <logger name='oracle.soa.mediator.utils'/>
+  <logger name='oracle.soa.mediator.validation'/>
+  <logger name='oracle.soa.scheduler'/>
+  <logger name='oracle.soa.services.common'/>
+  <logger name='oracle.soa.services.identity'/>
+  <logger name='oracle.soa.services.notification'/>
+  <logger name='oracle.soa.services.rules'/>
+  <logger name='oracle.soa.services.rules.obrtrace'/>
+  <logger name='oracle.soa.services.workflow'/>
+  <logger name='oracle.soa.services.workflow.common'/>
+  <logger name='oracle.soa.services.workflow.evidence'/>
+  <logger name='oracle.soa.services.workflow.metadata'/>
+  <logger name='oracle.soa.services.workflow.persistency'/>
+  <logger name='oracle.soa.services.workflow.query'/>
+  <logger name='oracle.soa.services.workflow.report'/>
+  <logger name='oracle.soa.services.workflow.runtimeconfig'/>
+  <logger name='oracle.soa.services.workflow.soa'/>
+  <logger name='oracle.soa.services.workflow.task'/>
+  <logger name='oracle.soa.services.workflow.task.dispatch'/>
+  <logger name='oracle.soa.services.workflow.task.routing'/>
+  <logger name='oracle.soa.services.workflow.user'/>
+  <logger name='oracle.soa.services.workflow.verification'/>
+  <logger name='oracle.soa.services.workflow.worklist'/>
+  <logger name='oracle.soa.services.workflow.performance'/>
+  <logger name='oracle.soa.services.cmds'/>
+  <logger name='oracle.soa.wsif'/>
+  <logger name='oracle.soa.xref'/>
+  <logger name='oracle.ucs'/>
+  <logger name='oracle.sdp'/>
+  <logger name='oracle.sdpinternal'/>
+  <logger name='oracle.sdp.messaging'/>
+  <logger name='oracle.sdp.messaging.client'/>
+  <logger name='oracle.sdp.messaging.driver'/>
+  <logger name='oracle.sdp.messaging.engine'/>
+  <logger name='oracle.sdp.messaging.parlayx'/>
+  <logger name='oracle.sdp.messaging.server'/>
+  <logger name='oracle.wsm'/>
+  <logger name='oracle.wsm.msg.logging' level='NOTIFICATION:1' useParentHandlers='false'>
+   <handler name='owsm-message-handler'/>
+   <handler name='wls-domain'/>
+  </logger>
+  <logger name='oracle.sysman' level='NOTIFICATION:32' useParentHandlers='false'>
+   <handler name='em-log-handler'/>
+   <handler name='em-trc-handler'/>
+  </logger>
+  <logger name='oracle.adf.model.log.AMPoolLifecycle' useParentHandlers='true'/>
+  <logger name='oracle.adf.model.log.LobDomain' useParentHandlers='true'/>
+  <logger name='oracle.adf.model.log.SQLBuilder' useParentHandlers='true'/>
+  <logger name='oracle.adf.model.log.DataChangeEvent' useParentHandlers='true'/>
+  <logger name='oracle.adf.model.log.JPXSettings' useParentHandlers='true'/>
+  <logger name='oracle.adf.model.log.GlobalGroovyFunctions' useParentHandlers='true'/>
+  <logger name='oracle.adf.businesseditor.log.AllocationManagement' useParentHandlers='true'/>
+  <logger name='oracle.adf.model.log.FrameManagement' useParentHandlers='true'/>
+  <logger name='oracle.adf.model.log.BusEvent' useParentHandlers='true'/>
+  <logger name='oracle.adf.model.log.DefaultValueSerializer' useParentHandlers='true'/>
+  <logger name='oracle.webservices' level='WARNING' useParentHandlers='true'/>
+  <logger name='oracle.webservices.management' level='WARNING' useParentHandlers='true'/>
+  <logger name='oracle.j2ee.ws' level='WARNING' useParentHandlers='true'/>
+  <logger name='oracle.j2ee.ws.server' level='WARNING' useParentHandlers='true'/>
+  <logger name='oracle.fabric.common' level='WARNING' useParentHandlers='true'/>
+  <logger name='oracle.soa.b2b.fabric' useParentHandlers='true'/>
+  <logger name='oracle.soa.hc' useParentHandlers='true'/>
+  <logger name='oracle.soa.hc.apptransport' useParentHandlers='true'/>
+  <logger name='oracle.soa.hc.engine' useParentHandlers='true'/>
+  <logger name='oracle.soa.hc.repository' useParentHandlers='true'/>
+  <logger name='oracle.soa.hc.transport' useParentHandlers='true'/>
+  <logger name='oracle.soa.hc.ui' useParentHandlers='true'/>
+  <logger name='oracle.soa.hc.modelcfgfwk' useParentHandlers='true'/>
+  <logger name='oracle.soa.hc.fabric' useParentHandlers='true'/>
+  <logger name='oracle.soa.sql.trc.fabric' level='SEVERE' useParentHandlers='false'>
+   <handler name='soa-tracking-trc-handler'/>
+  </logger>
+  <logger name='oracle.adf.model.log.ApplicationScript' useParentHandlers='true'/>
+  <logger name='oracle.adf.share.diagnostics.versions' level='FINEST' useParentHandlers='true'/>
+  <logger name='oracle.adf.share.mds.MDSTransManager' useParentHandlers='true'/>
+  <logger name='oracle.adf.share.mds.MDSTransManagerClientExceptionLog' useParentHandlers='true'/>
+ </loggers>
+</logging_configuration>
