@@ -163,10 +163,22 @@ public class BulkModifyUserEHPostProcess implements PostProcessHandler, Conditio
         // Fetch User attributes
         String managerKey = newUserState.getManagerKey();
         String userType = newUserState.getEmployeeType();
-        User managerUser = this.usrMgr.getDetails(managerKey, new HashSet<String>(), false);
-        String managerUserLogin = managerUser.getLogin();
-        logger.log(ODLLevel.NOTIFICATION, "Manager Key = {0}, Manager User Login = {1}, User Type ={2}", new Object[]{managerKey,managerUserLogin,userType});
-
+        String managerUserLogin = "";
+        
+        // Check existence of manager key
+        if(managerKey != null)
+        {
+            User managerUser = this.usrMgr.getDetails(managerKey, new HashSet<String>(), false);
+            managerUserLogin = managerUser.getLogin();
+        }
+        
+        else
+        {
+            managerUserLogin = "NO_MANAGER";
+        }
+  
+        logger.log(ODLLevel.NOTIFICATION, "Manager Key = {0}, Manager User Login = {1}, User Type ={2}", new Object[]{managerKey,managerUserLogin,userType});   
+        
         // Populate Department Number with <Manager User Login>|<Manager USR Key>|<User Type>
         String result = managerKey + "|" + managerUserLogin + "|" + userType;
         logger.log(ODLLevel.NOTIFICATION, "Result = {0}", new Object[]{result});
