@@ -7,6 +7,9 @@ import java.util.List;
 import oracle.iam.identity.usermgmt.api.UserManager;
 import oracle.iam.identity.usermgmt.api.UserManagerConstants;
 import oracle.iam.platform.OIMClient;
+import oracle.iam.platform.entitymgr.vo.SearchCriteria;
+import oracle.iam.provisioning.api.EntitlementService;
+import oracle.iam.provisioning.api.ProvisioningConstants;
 import oracle.iam.provisioning.api.ProvisioningService;
 import oracle.iam.provisioning.vo.Entitlement;
 import oracle.iam.provisioning.vo.EntitlementInstance;
@@ -52,6 +55,25 @@ public class EntitlementTestDriver
             // Get OIM Services
             UserManager usrMgr = oimClient.getService(UserManager.class);
             ProvisioningService provServOps = oimClient.getService(ProvisioningService.class);
+            EntitlementService entServ = oimClient.getService(EntitlementService.class);
+            
+            //Entitlement oneEnt = entServ.findEntitlement(1L);
+            //System.out.println(oneEnt.toString());
+           
+
+            /*SearchCriteria criteria = new SearchCriteria(ProvisioningConstants.EntitlementSearchAttribute.ENTITLEMENT_CODE.getId(),"*", SearchCriteria.Operator.EQUAL);
+            HashMap<String,Object> configParams = new HashMap<String,Object>();
+            List<Entitlement> entitlements = entServ.findEntitlements(criteria, configParams);
+            Entitlement revokeEnt = new Entitlement();
+            
+            for(Entitlement entitlement: entitlements)
+            {
+                if(entitlement.getEntitlementCode().equalsIgnoreCase("IBM"))
+                {
+                    revokeEnt = entitlement;
+                    break;
+                }
+            }*/
             
             String userKey = "41" ;
             List<EntitlementInstance> userEntitlements =  provServOps.getEntitlementsForUser(userKey);
@@ -59,11 +81,11 @@ public class EntitlementTestDriver
             
             for(EntitlementInstance ei : userEntitlements )
             {
-                System.out.println(ei.getEntitlement().getDisplayName());
+                System.out.println(ei.getChildTablePrimaryKey());
             }
             
             
-            EntitlementInstance grantEntInst = new EntitlementInstance();
+            /*EntitlementInstance grantEntInst = new EntitlementInstance();
             Entitlement grantEnt = new Entitlement();
             grantEnt.setItResourceKey(42L);
             grantEnt.setObjectKey(42L);
@@ -76,9 +98,25 @@ public class EntitlementTestDriver
             grantEntInst.setEntitlement(grantEnt);
             grantEntInst.setAccountKey(55L);
             grantEntInst.setUsrKey(41L);
+            provServOps.grantEntitlement(grantEntInst);*/
             
+            EntitlementInstance revokeEntInst = new EntitlementInstance();
+            Entitlement revokeEnt = new Entitlement();
+            revokeEnt.setItResourceKey(42L);
+            revokeEnt.setObjectKey(42L);
+            revokeEnt.setEntitlementKey(7L);
+            revokeEnt.setEntitlementCode("IBM");
+            revokeEnt.setEntitlementValue("IBM");
+            revokeEnt.setFormName("UD_LPTYPE");
+            revokeEnt.setFormKey(45L);
+            revokeEnt.setFormFieldKey(348L);
+            revokeEntInst.setEntitlement(revokeEnt);
+            revokeEntInst.setAccountKey(55L);
+            revokeEntInst.setUsrKey(41L);
+            revokeEntInst.setEntitlementInstanceKey(25L);
+            revokeEntInst.setChildTablePrimaryKey(24L);
+            provServOps.revokeEntitlement(revokeEntInst);
             
-            provServOps.grantEntitlement(grantEntInst);
             
             
             
