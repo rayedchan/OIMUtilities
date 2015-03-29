@@ -61,7 +61,8 @@ public class EntitlementTestDriver
             //System.out.println(oneEnt.toString());
            
 
-            /*SearchCriteria criteria = new SearchCriteria(ProvisioningConstants.EntitlementSearchAttribute.ENTITLEMENT_CODE.getId(),"*", SearchCriteria.Operator.EQUAL);
+            // Get Entitlement Definition (Use for in granting)
+            SearchCriteria criteria = new SearchCriteria(ProvisioningConstants.EntitlementSearchAttribute.ENTITLEMENT_CODE.getId(),"*", SearchCriteria.Operator.EQUAL);
             HashMap<String,Object> configParams = new HashMap<String,Object>();
             List<Entitlement> entitlements = entServ.findEntitlements(criteria, configParams);
             Entitlement revokeEnt = new Entitlement();
@@ -73,55 +74,51 @@ public class EntitlementTestDriver
                     revokeEnt = entitlement;
                     break;
                 }
-            }*/
+            }
             
+            
+            // Get user's entitlements (Can be used for deletion)
             String userKey = "41" ;
             List<EntitlementInstance> userEntitlements =  provServOps.getEntitlementsForUser(userKey);
             //System.out.println(userEntitlements);
             
             for(EntitlementInstance ei : userEntitlements )
             {
-                System.out.println(ei.getChildTablePrimaryKey());
+                System.out.println(ei);
             }
             
             
-            /*EntitlementInstance grantEntInst = new EntitlementInstance();
-            Entitlement grantEnt = new Entitlement();
-            grantEnt.setItResourceKey(42L);
-            grantEnt.setObjectKey(42L);
-            grantEnt.setEntitlementKey(7L);
-            grantEnt.setEntitlementCode("IBM");
-            grantEnt.setEntitlementValue("IBM");
-            grantEnt.setFormName("UD_LPTYPE");
-            grantEnt.setFormKey(45L);
-            grantEnt.setFormFieldKey(348L);
-            grantEntInst.setEntitlement(grantEnt);
-            grantEntInst.setAccountKey(55L);
-            grantEntInst.setUsrKey(41L);
-            provServOps.grantEntitlement(grantEntInst);*/
+            EntitlementInstance grantEntInst = new EntitlementInstance();
+            //Entitlement grantEnt = new Entitlement();
+            //grantEnt.setItResourceKey(42L);
+            //grantEnt.setObjectKey(42L);
+            //grantEnt.setEntitlementKey(7L);
+            //grantEnt.setEntitlementCode("IBM");
+            //grantEnt.setEntitlementValue("IBM");
+            //grantEnt.setFormName("UD_LPTYPE");
+            //grantEnt.setFormKey(45L);
+            //grantEnt.setFormFieldKey(348L);
+            grantEntInst.setEntitlement(revokeEnt); // **
+            grantEntInst.setAccountKey(55L); // ** OIU_KEY
+            //grantEntInst.setUsrKey(41L);
+            //provServOps.grantEntitlement(grantEntInst);
             
             EntitlementInstance revokeEntInst = new EntitlementInstance();
-            Entitlement revokeEnt = new Entitlement();
-            revokeEnt.setItResourceKey(42L);
-            revokeEnt.setObjectKey(42L);
-            revokeEnt.setEntitlementKey(7L);
-            revokeEnt.setEntitlementCode("IBM");
-            revokeEnt.setEntitlementValue("IBM");
-            revokeEnt.setFormName("UD_LPTYPE");
-            revokeEnt.setFormKey(45L);
-            revokeEnt.setFormFieldKey(348L);
-            revokeEntInst.setEntitlement(revokeEnt);
-            revokeEntInst.setAccountKey(55L);
-            revokeEntInst.setUsrKey(41L);
-            revokeEntInst.setEntitlementInstanceKey(25L);
-            revokeEntInst.setChildTablePrimaryKey(24L);
-            provServOps.revokeEntitlement(revokeEntInst);
-            
-            
-            
-            
-            
-            
+            //Entitlement revokeEnt = new Entitlement();
+            //revokeEnt.setItResourceKey(42L);
+            //revokeEnt.setObjectKey(42L);
+            //revokeEnt.setEntitlementKey(7L);
+            //revokeEnt.setEntitlementCode("IBM");
+            //revokeEnt.setEntitlementValue("IBM");
+            //revokeEnt.setFormName("UD_LPTYPE");
+            //revokeEnt.setFormKey(45L);
+            //revokeEnt.setFormFieldKey(348L);
+            revokeEntInst.setEntitlement(revokeEnt); // **
+            revokeEntInst.setAccountKey(55L); // **
+            //revokeEntInst.setUsrKey(41L);
+            //revokeEntInst.setEntitlementInstanceKey(26L);
+            revokeEntInst.setChildTablePrimaryKey(25L); // **
+            //provServOps.revokeEntitlement(revokeEntInst);  
         }
         
         finally
