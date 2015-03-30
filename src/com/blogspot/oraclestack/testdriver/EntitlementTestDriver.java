@@ -1,18 +1,13 @@
 package com.blogspot.oraclestack.testdriver;
 
-import java.util.ArrayList;
+import com.blogspot.oraclestack.utilities.EntitlementUtilities;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.List;
 import oracle.iam.identity.usermgmt.api.UserManager;
-import oracle.iam.identity.usermgmt.api.UserManagerConstants;
 import oracle.iam.platform.OIMClient;
-import oracle.iam.platform.entitymgr.vo.SearchCriteria;
 import oracle.iam.provisioning.api.EntitlementService;
-import oracle.iam.provisioning.api.ProvisioningConstants;
 import oracle.iam.provisioning.api.ProvisioningService;
-import oracle.iam.provisioning.vo.Entitlement;
-import oracle.iam.provisioning.vo.EntitlementInstance;
 
 /**
  *
@@ -57,68 +52,31 @@ public class EntitlementTestDriver
             ProvisioningService provServOps = oimClient.getService(ProvisioningService.class);
             EntitlementService entServ = oimClient.getService(EntitlementService.class);
             
-            //Entitlement oneEnt = entServ.findEntitlement(1L);
-            //System.out.println(oneEnt.toString());
-           
-
-            // Get Entitlement Definition (Use for in granting)
-            SearchCriteria criteria = new SearchCriteria(ProvisioningConstants.EntitlementSearchAttribute.ENTITLEMENT_CODE.getId(),"*", SearchCriteria.Operator.EQUAL);
-            HashMap<String,Object> configParams = new HashMap<String,Object>();
-            List<Entitlement> entitlements = entServ.findEntitlements(criteria, configParams);
-            Entitlement revokeEnt = new Entitlement();
+            // Instantiate custom entitlement utils
+            EntitlementUtilities entUtils = new EntitlementUtilities(provServOps, usrMgr, entServ);
             
-            for(Entitlement entitlement: entitlements)
-            {
-                if(entitlement.getEntitlementCode().equalsIgnoreCase("IBM"))
-                {
-                    revokeEnt = entitlement;
-                    break;
-                }
-            }
+            // Print all entitlement definitions
+            //entUtils.printEntitlementDefinition();
             
+            String userLogin = "NTAYLOR";
+            String appInstName = "Laptop";
+            String entitlementCode = "IBM";
+            String entitlementDisplayName = "IBM"; 
+            HashMap<String, Object> entitlementAttributes = new HashMap<String,Object>();
+            entitlementAttributes.put("UD_LPTYPE_STARTDATE", new Date());
+            entitlementAttributes.put("UD_LPTYPE_HARDDRIVESPACE", "400GB");
             
-            // Get user's entitlements (Can be used for deletion)
-            String userKey = "41" ;
-            List<EntitlementInstance> userEntitlements =  provServOps.getEntitlementsForUser(userKey);
-            //System.out.println(userEntitlements);
+            // Print user's entitlements
+            //entUtils.printUserEntitlementInstances(userLogin);
+                              
+            // Grant Entitlement to user
+            // entUtils.grantEntitlementToUser(userLogin, appInstName, entitlementCode, entitlementAttributes);
             
-            for(EntitlementInstance ei : userEntitlements )
-            {
-                System.out.println(ei);
-            }
+            // Update Entitlement on user
+            //entUtils.updateEntitlementInstanceOnUser(userLogin, entitlementDisplayName, entitlementAttributes);
             
-            
-            EntitlementInstance grantEntInst = new EntitlementInstance();
-            //Entitlement grantEnt = new Entitlement();
-            //grantEnt.setItResourceKey(42L);
-            //grantEnt.setObjectKey(42L);
-            //grantEnt.setEntitlementKey(7L);
-            //grantEnt.setEntitlementCode("IBM");
-            //grantEnt.setEntitlementValue("IBM");
-            //grantEnt.setFormName("UD_LPTYPE");
-            //grantEnt.setFormKey(45L);
-            //grantEnt.setFormFieldKey(348L);
-            grantEntInst.setEntitlement(revokeEnt); // **
-            grantEntInst.setAccountKey(55L); // ** OIU_KEY
-            //grantEntInst.setUsrKey(41L);
-            //provServOps.grantEntitlement(grantEntInst);
-            
-            EntitlementInstance revokeEntInst = new EntitlementInstance();
-            //Entitlement revokeEnt = new Entitlement();
-            //revokeEnt.setItResourceKey(42L);
-            //revokeEnt.setObjectKey(42L);
-            //revokeEnt.setEntitlementKey(7L);
-            //revokeEnt.setEntitlementCode("IBM");
-            //revokeEnt.setEntitlementValue("IBM");
-            //revokeEnt.setFormName("UD_LPTYPE");
-            //revokeEnt.setFormKey(45L);
-            //revokeEnt.setFormFieldKey(348L);
-            revokeEntInst.setEntitlement(revokeEnt); // **
-            revokeEntInst.setAccountKey(55L); // **
-            //revokeEntInst.setUsrKey(41L);
-            //revokeEntInst.setEntitlementInstanceKey(26L);
-            revokeEntInst.setChildTablePrimaryKey(25L); // **
-            //provServOps.revokeEntitlement(revokeEntInst);  
+            // Revoke an entitlement from user
+            //entUtils.revokeEntitlementFromUser(userLogin, entitlementDisplayName);
         }
         
         finally
