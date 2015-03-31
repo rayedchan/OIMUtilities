@@ -136,7 +136,7 @@ public class EntitlementUtilities
             
             // Set required fields to grant entitlement
             grantEntInst.setEntitlement(entitlement); // **
-            grantEntInst.setAccountKey(55L); // ** OIU_KEY
+            grantEntInst.setAccountKey(Long.parseLong(accountKey)); // ** OIU_KEY
             
             // Set attributes on entitlement if any 
             grantEntInst.setChildFormValues(entitlementAttributes);
@@ -203,7 +203,7 @@ public class EntitlementUtilities
      * @throws AccountNotFoundException
      * @throws EntitlementNotFoundException 
      */
-    public void updateEntitlementInstanceOnUser(String userLogin, String entitlementName,  HashMap<String,Object> entitlementAttributes) throws NoSuchUserException, UserLookupException, UserNotFoundException, GenericProvisioningException, AccountNotFoundException, EntitlementNotFoundException
+    public void updateEntitlementInstanceOnUser(String userLogin, String entitlementName, HashMap<String,Object> entitlementAttributes) throws NoSuchUserException, UserLookupException, UserNotFoundException, GenericProvisioningException, AccountNotFoundException, EntitlementNotFoundException
     {
         // Get user's key
         String userKey = this.getUserKeyByUserLogin(userLogin);

@@ -10,12 +10,11 @@ import oracle.iam.provisioning.api.EntitlementService;
 import oracle.iam.provisioning.api.ProvisioningService;
 
 /**
- *
- * @author oracle
+ * Test Driver for using entitlement API.
+ * @author rayedchan
  */
 public class EntitlementTestDriver 
 {
-    
      // Adjust constant variables according to you OIM environment
     public static final String OIM_HOSTNAME = "localhost";
     public static final String OIM_PORT = "14000"; // For SSL, use 14001; For non-SSL, use 14000
@@ -58,19 +57,19 @@ public class EntitlementTestDriver
             // Print all entitlement definitions
             //entUtils.printEntitlementDefinition();
             
-            String userLogin = "NTAYLOR";
+            String userLogin = "RSYNGAL";
             String appInstName = "Laptop";
-            String entitlementCode = "IBM";
-            String entitlementDisplayName = "IBM"; 
+            String entitlementCode = "Lenovo";
+            String entitlementDisplayName = "Lenovo"; 
             HashMap<String, Object> entitlementAttributes = new HashMap<String,Object>();
             entitlementAttributes.put("UD_LPTYPE_STARTDATE", new Date());
-            entitlementAttributes.put("UD_LPTYPE_HARDDRIVESPACE", "400GB");
+            entitlementAttributes.put("UD_LPTYPE_HARDDRIVESPACE", "300GB");
             
             // Print user's entitlements
             //entUtils.printUserEntitlementInstances(userLogin);
                               
             // Grant Entitlement to user
-            // entUtils.grantEntitlementToUser(userLogin, appInstName, entitlementCode, entitlementAttributes);
+            //entUtils.grantEntitlementToUser(userLogin, appInstName, entitlementCode, entitlementAttributes);
             
             // Update Entitlement on user
             //entUtils.updateEntitlementInstanceOnUser(userLogin, entitlementDisplayName, entitlementAttributes);
