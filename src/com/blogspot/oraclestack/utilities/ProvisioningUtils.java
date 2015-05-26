@@ -47,6 +47,22 @@ public class ProvisioningUtils
         this.provService = oimClient.getService(ProvisioningService.class);
     }
     
+    /**
+     * Provision a resource account to a user.
+     * @param userLogin     OIM User Login (USR.USR_LOGIN)
+     * @param appInstName   Name of application instance (APP_INSTANCE.APP_INSTANCE_NAME)
+     * @param parentData    Data to populate the parent process form
+     * @param childData     Data to populate the child process form(s)
+     * @return Account Id (OIU_KEY)
+     * @throws AccessDeniedException
+     * @throws NoSuchUserException
+     * @throws UserLookupException
+     * @throws ApplicationInstanceNotFoundException
+     * @throws GenericAppInstanceServiceException
+     * @throws UserNotFoundException
+     * @throws oracle.iam.platform.authopss.exception.AccessDeniedException
+     * @throws GenericProvisioningException 
+     */
     public Long provisionResourceAccountToUser(String userLogin, String appInstName, Map<String,Object> parentData, Map<String, ArrayList<ChildTableRecord>> childData) throws AccessDeniedException, NoSuchUserException, UserLookupException, ApplicationInstanceNotFoundException, GenericAppInstanceServiceException, UserNotFoundException, oracle.iam.platform.authopss.exception.AccessDeniedException, GenericProvisioningException
     {
         // Get OIM User searching by User Login (USR.USR_LOGIN)
