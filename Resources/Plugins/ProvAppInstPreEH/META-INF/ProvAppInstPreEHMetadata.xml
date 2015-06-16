@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eventhandlers xmlns="http://www.oracle.com/schema/oim/platform/kernel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.oracle.com/schema/oim/platform/kernel orchestration-handlers.xsd"> 
+  <action-handler 
+     entity-type="ApplicationInstance"
+     operation="PROVISION"
+     class="com.blogspot.oraclestack.eventhandlers.ProvisionAppInstancePreProcess"
+     name="ProvisionAppInstancePreProcess"
+     stage="preprocess"
+     order="1"
+     sync="TRUE"/> 
+</eventhandlers>
