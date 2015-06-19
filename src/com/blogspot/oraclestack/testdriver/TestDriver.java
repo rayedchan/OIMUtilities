@@ -70,7 +70,7 @@ public class TestDriver
             //roleUtils.revokeRoleFromUser("engr", "49");
             
             // Plugin Registation
-            String pluginZip = "/home/oracle/NetBeansProjects/OIMUtilities/Resources/Plugins/BulkUserModifyEH/BulkUserModifyEH.zip";
+            String pluginZip = "/home/oracle/Github/OIMUtilities/Resources/Plugins/FetchCredentialStoreST/FetchCredentialStoreST.zip";
             PluginRegistration pluginReg = new PluginRegistration(oimClient);
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess", "1.0");
             pluginReg.registerOIMPlugin(pluginZip);
