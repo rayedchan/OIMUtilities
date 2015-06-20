@@ -1,13 +1,16 @@
 package com.blogspot.oraclestack.testdriver;
 
 import com.blogspot.oraclestack.utilities.EntitlementUtilities;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import oracle.iam.identity.usermgmt.api.UserManager;
 import oracle.iam.platform.OIMClient;
 import oracle.iam.provisioning.api.EntitlementService;
 import oracle.iam.provisioning.api.ProvisioningService;
+import oracle.iam.provisioning.vo.Entitlement;
 
 /**
  * Test Driver for using entitlement API.
@@ -55,7 +58,28 @@ public class EntitlementTestDriver
             EntitlementUtilities entUtils = new EntitlementUtilities(provServOps, usrMgr, entServ);
             
             // Print all entitlement definitions
-            //entUtils.printEntitlementDefinition();
+            entUtils.printEntitlementDefinition();
+            
+            Entitlement ent = new Entitlement();
+            ent.setDisplayName("GridGuard"); // ENT_DISPLAY_NAME
+            ent.setEntitlementCode("21~GridGuard"); // ENT_CODE
+            ent.setEntitlementValue("BadgeAccess~GridGuard");// ENT_VALUE
+            ent.setItResourceKey(21L); // SVR_KEY
+            ent.setObjectKey(21L); // OBJ_KEY
+            ent.setFormKey(23L); // SDK_KEY
+            ent.setFormFieldKey(74L); // SDC_KEY  *Use Key lookup attribute
+            ent.setLookupValueKey(1570L); // LKU_KEY
+            //entServ.addEntitlement(ent);
+            
+            String displayName = "GridGuard";
+            String entCode = "21~GridGuard";
+            String entValue = "BadgeAccess~GridGuard";
+            Long itResKey = 21L;
+            Long objKey = 21L;
+            Long formKey = 23L;
+            Long formFieldKey = 74L;
+            Long lookupKey = 1581L;
+            entUtils.createEntitlement(displayName, entCode, entValue, itResKey, objKey, formKey, formFieldKey, lookupKey);
             
             String userLogin = "RSYNGAL";
             String appInstName = "Laptop";
@@ -64,7 +88,7 @@ public class EntitlementTestDriver
             HashMap<String, Object> entitlementAttributes = new HashMap<String,Object>();
             entitlementAttributes.put("UD_LPTYPE_STARTDATE", new Date());
             entitlementAttributes.put("UD_LPTYPE_HARDDRIVESPACE", "300GB");
-            
+                        
             // Print user's entitlements
             //entUtils.printUserEntitlementInstances(userLogin);
                               

@@ -15,12 +15,18 @@ import oracle.iam.provisioning.api.EntitlementService;
 import oracle.iam.provisioning.api.ProvisioningConstants;
 import oracle.iam.provisioning.api.ProvisioningService;
 import oracle.iam.provisioning.exception.AccountNotFoundException;
+import oracle.iam.provisioning.exception.DuplicateEntitlementException;
 import oracle.iam.provisioning.exception.EntitlementAlreadyProvisionedException;
 import oracle.iam.provisioning.exception.EntitlementNotFoundException;
 import oracle.iam.provisioning.exception.EntitlementNotProvisionedException;
+import oracle.iam.provisioning.exception.FormFieldNotFoundException;
+import oracle.iam.provisioning.exception.FormNotFoundException;
 import oracle.iam.provisioning.exception.GenericEntitlementServiceException;
 import oracle.iam.provisioning.exception.GenericProvisioningException;
+import oracle.iam.provisioning.exception.ITResourceNotFoundException;
 import oracle.iam.provisioning.exception.ImproperAccountStateException;
+import oracle.iam.provisioning.exception.LookupValueNotFoundException;
+import oracle.iam.provisioning.exception.ObjectNotFoundException;
 import oracle.iam.provisioning.exception.UserNotFoundException;
 import oracle.iam.provisioning.vo.Account;
 import oracle.iam.provisioning.vo.Entitlement;
@@ -46,7 +52,7 @@ public class EntitlementUtilities
         this.userMgrOps = userMgrOps;
         this.entServ = entServ;
     }
-    
+        
     /**
      * Get all the entitlements from the OIM environment. 
      * @throws GenericEntitlementServiceException 
@@ -234,6 +240,46 @@ public class EntitlementUtilities
             logger.log(ODLLevel.NOTIFICATION, "No such entitlement instance to update: {0}", new Object[]{entitlementName});
         }
         
+    }
+    
+     /**
+     * Creates an entitlement in OIM.
+     * DO NOT USE. Incorrect behavior in 11.1.2.0.0
+     * The problem is with setting the lookup value key (LKV). The API does a validation against the LKU.
+     * The API will create a new record in the ENT_LIST that has an incorrect key.
+     * Also, there is no record added to the lookup (LKV).
+     * 
+     * @param displayName   Display Name of the entitlement
+     * @param entCode       Entitlement Code 
+     * @param entValue      Entitlement Value
+     * @param itResKey
+     * @param objKey
+     * @param formKey
+     * @param formFieldKey
+     * @param lookupKey
+     * @throws ITResourceNotFoundException
+     * @throws ObjectNotFoundException
+     * @throws DuplicateEntitlementException
+     * @throws GenericEntitlementServiceException
+     * @throws FormFieldNotFoundException
+     * @throws LookupValueNotFoundException
+     * @throws FormNotFoundException 
+     */
+    public void createEntitlement(String displayName, String entCode, String entValue, Long itResKey, Long objKey, Long formKey, Long formFieldKey, Long lookupKey) throws ITResourceNotFoundException, ObjectNotFoundException, DuplicateEntitlementException, GenericEntitlementServiceException, FormFieldNotFoundException, LookupValueNotFoundException, FormNotFoundException
+    {
+        // Setup Entitlement Definition
+        Entitlement ent = new Entitlement();
+        ent.setDisplayName(displayName); // ENT_DISPLAY_NAME
+        ent.setEntitlementCode(entCode); // ENT_CODE
+        ent.setEntitlementValue(entValue);// ENT_VALUE
+        ent.setItResourceKey(itResKey); // SVR_KEY
+        ent.setObjectKey(objKey); // OBJ_KEY
+        ent.setFormKey(formKey); // SDK_KEY
+        ent.setFormFieldKey(formFieldKey); // SDC_KEY  *Use Key lookup attribute
+        ent.setLookupValueKey(lookupKey); // LKU_KEY *Look like a bug with OIM here; there should be a setter method for LKU
+        
+        // Call API to create the entitlement in OIM
+        this.entServ.addEntitlement(ent); 
     }
     
      /**
