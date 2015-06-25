@@ -62,36 +62,12 @@ public class ResourceServiceAccountTestDriver
             ProvisioningService provService = oimClient.getService(ProvisioningService.class);
             usrOps = oimClient.getService(tcUserOperationsIntf.class);
             
-            String appInstName = "BadgeAccess"; // TODO: Change accordingly
+            // TODO: Change accordingly
+            String appInstName = "BadgeAccess";
+            Account.ACCOUNT_TYPE accountType = Account.ACCOUNT_TYPE.ServiceAccount;
             
-            // Filter for accounts with status "Provisioned"
-            SearchCriteria provisonedCriterion = new SearchCriteria(ProvisioningConstants.AccountSearchAttribute.ACCOUNT_STATUS.getId(), ProvisioningConstants.ObjectStatus.PROVISIONED.getId(), SearchCriteria.Operator.EQUAL);
-            
-            // Filter for accounts that are not service accounts
-            SearchCriteria typeCriterion = new SearchCriteria(ProvisioningConstants.AccountSearchAttribute.ACCOUNT_TYPE.getId(), Account.ACCOUNT_TYPE.ServiceAccount.getId(), SearchCriteria.Operator.NOT_EQUAL);
-            
-            // Combine criteria: Not a service account and is provisioned
-            SearchCriteria criteria = new SearchCriteria(typeCriterion, provisonedCriterion, SearchCriteria.Operator.AND);
-            
-            // Get resource accounts
-            HashMap<String,Object> configParams = new HashMap<String,Object>();
-            List<Account> accounts = provService.getProvisionedAccountsForAppInstance(appInstName, criteria, configParams);
-            
-            // Iterate accounts
-            for(Account account: accounts)
-            {
-                String usrKey = account.getUserKey();
-                String procInstKey = account.getProcessInstanceKey();
-                String oiuKey = account.getAccountID();
-                LOGGER.log(ODLLevel.NOTIFICATION, "User Key: {2}, Process Instance Key: {0}, OIU Key = {1}", new Object[]{procInstKey, oiuKey, usrKey});
-                
-                // Convert to service account
-                usrOps.changeToServiceAccount(Long.parseLong(oiuKey));
-                
-                // Convert service account to regular account
-                // usrOps.changeFromServiceAccount(Long.parseLong(oiuKey));
-            }
-            
+            // Make call to change the account type on all accounts of a specific application instance
+            changeAccountTypeOnAllAccounts(provService, usrOps, appInstName, accountType);
         }
         
         finally
@@ -108,4 +84,52 @@ public class ResourceServiceAccountTestDriver
         }
         
     }
+    
+    /**
+     * Change the account type on all resource accounts of an application instance.
+     * @param provService   Provisioning API Service
+     * @param usrOps        tcUserOperationsIntf API service
+     * @param appInstName   Application Instance name 
+     * @param accountType   Account type to change to
+     * @throws GenericProvisioningException
+     * @throws tcAPIException 
+     */
+    private static void changeAccountTypeOnAllAccounts(ProvisioningService provService, tcUserOperationsIntf usrOps, String appInstName, Account.ACCOUNT_TYPE accountType) throws GenericProvisioningException, tcAPIException
+    {
+         // Filter for accounts with status "Provisioned"
+        SearchCriteria provisonedCriterion = new SearchCriteria(ProvisioningConstants.AccountSearchAttribute.ACCOUNT_STATUS.getId(), ProvisioningConstants.ObjectStatus.PROVISIONED.getId(), SearchCriteria.Operator.EQUAL);
+
+        // Filter for accounts that are not account type you are changing to
+        SearchCriteria typeCriterion = new SearchCriteria(ProvisioningConstants.AccountSearchAttribute.ACCOUNT_TYPE.getId(), accountType.getId(), SearchCriteria.Operator.NOT_EQUAL);
+
+        // Combine criteria: Not account type changing to and is provisioned
+        SearchCriteria criteria = new SearchCriteria(typeCriterion, provisonedCriterion, SearchCriteria.Operator.AND);
+
+        // Get resource accounts based on criteria
+        HashMap<String,Object> configParams = new HashMap<String,Object>();
+        List<Account> accounts = provService.getProvisionedAccountsForAppInstance(appInstName, criteria, configParams);
+
+        // Iterate accounts
+        for(Account account: accounts)
+        {
+            String usrKey = account.getUserKey();
+            String procInstKey = account.getProcessInstanceKey();
+            String oiuKey = account.getAccountID();
+            String curAccountType = account.getAccountType().getId();
+            LOGGER.log(ODLLevel.NOTIFICATION, "User Key: {2}, Process Instance Key: {0}, OIU Key = {1}, Account = {3}", new Object[]{procInstKey, oiuKey, usrKey,curAccountType});
+
+            if(Account.ACCOUNT_TYPE.ServiceAccount.getId().equals(accountType.getId()))
+            {
+                // Convert to service account
+                usrOps.changeToServiceAccount(Long.parseLong(oiuKey));
+            }
+
+            else if(curAccountType.equals(Account.ACCOUNT_TYPE.ServiceAccount.getId()))
+            {
+                // Convert service account to regular account
+                usrOps.changeFromServiceAccount(Long.parseLong(oiuKey));
+            }
+        }
+    }
+    
 }
