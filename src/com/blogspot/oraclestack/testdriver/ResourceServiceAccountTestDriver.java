@@ -18,7 +18,7 @@ import oracle.iam.provisioning.exception.GenericProvisioningException;
 import oracle.iam.provisioning.vo.Account;
 
 /**
- *
+ * Converts all resource accounts of a single application instance into service accounts.
  * @author rayedchan
  */
 public class ResourceServiceAccountTestDriver 
@@ -84,24 +84,6 @@ public class ResourceServiceAccountTestDriver
                 String procInstKey = account.getProcessInstanceKey();
                 String oiuKey = account.getAccountID();
                 LOGGER.log(ODLLevel.NOTIFICATION, "User Key: {2}, Process Instance Key: {0}, OIU Key = {1}", new Object[]{procInstKey, oiuKey, usrKey});
-                
-                /*
-                    psUtil = new PreparedStatementUtil();
-                    psUtil.setStatement(getDatabase(), query);
-                    psUtil.setString(1, Account.ACCOUNT_TYPE.Other.getId());
-                    psUtil.setString(2, account.getUserKey());
-                    psUtil.setString(3, Account.ACCOUNT_TYPE.Primary.getId());
-                    psUtil.setLong(4, account.getAppInstance().getApplicationInstanceKey());
-                    psUtil.executeUpdate();
-                    
-                    UPDATE_EXISTING_PRIMARY_ACCOUNT_FOR_USER=UPDATE OIU \
-                       SET ACCOUNT_TYPE = ? \
-	               WHERE USR_KEY = ? \
-	               AND ACCOUNT_TYPE = ? \
-	               AND APP_INSTANCE_KEY = ? 
-                    
-                 */
-                //provService.changeAccountType(Long.parseLong(oiuKey), Account.ACCOUNT_TYPE.Other); // Will error out if OIU_SERVICEACCOUNT = 1; Only changes primary to other
                 
                 // Convert to service account
                 usrOps.changeToServiceAccount(Long.parseLong(oiuKey));
