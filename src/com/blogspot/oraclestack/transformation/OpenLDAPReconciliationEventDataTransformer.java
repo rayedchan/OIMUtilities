@@ -16,7 +16,8 @@ public class OpenLDAPReconciliationEventDataTransformer
     private static final ODLLogger LOGGER = ODLLogger.getODLLogger(OpenLDAPReconciliationEventDataTransformer.class.getName());
            
     /**
-     * Method for transforming the attributes
+     * Method for transforming the attributes. Incoming parent and child data are
+     * from the target system.
      * @param parentData    HashMap<String,Object> containing parent data details
      * @param childData     HashMap<String,Object> containing child data details
      * @param reconField    Name of reconciliation field being transformed
@@ -26,7 +27,7 @@ public class OpenLDAPReconciliationEventDataTransformer
     {
         LOGGER.log(ODLLevel.NOTIFICATION, "Parameters: Parent Data = {0}, Child Data = {1}, Field = {2}", new Object[]{parentData, childData, reconField});
         
-        // Get values using the traget system data. Use reconciliation field name to fetch value.
+        // Get values using the target data. Use reconciliation field name to fetch value.
         String firstName = (String) parentData.get("First Name");
         LOGGER.log(ODLLevel.NOTIFICATION, "First Name = {0}", new Object[]{firstName});
         String lastName = (String) parentData.get("Last Name");
