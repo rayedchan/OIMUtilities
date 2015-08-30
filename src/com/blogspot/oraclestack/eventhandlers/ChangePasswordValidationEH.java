@@ -34,7 +34,8 @@ public class ChangePasswordValidationEH implements ValidationHandler
     private static final ODLLogger LOGGER = ODLLogger.getODLLogger(ChangePasswordValidationEH.class.getName());
     
     // OIM API Services
-    private static final UserManager USRMGR =  Platform.getService(UserManager.class);
+    // private static final UserManager USRMGR =  Platform.getService(UserManager.class);
+    private static final UserManager USRMGR = Platform.getServiceForEventHandlers(UserManager.class, null, "ADMIN","ChangePasswordValidationEH", null);
     
     // SQL Query
     private static final String USER_ATTRS_SQL_QUERY = "SELECT usr_login, usr_middle_name, usr_email FROM usr where usr_key=?";
@@ -71,7 +72,7 @@ public class ChangePasswordValidationEH implements ValidationHandler
             LOGGER.log(ODLLevel.TRACE, "New Password: {0}", new Object[]{newPasswordDecrypted}); // TODO: Remove
             
             // Anonymous user case E.g. Scenario Forget Password?
-            if("<anonymous>".equalsIgnoreCase(actorLogin))
+            /*if("<anonymous>".equalsIgnoreCase(actorLogin))
             {
                 // Get OIM database connection from data source
                 LOGGER.log(ODLLevel.NOTIFICATION, "Anonymous User");
@@ -105,14 +106,14 @@ public class ChangePasswordValidationEH implements ValidationHandler
             
             // All other cases (E.g. Administrator, Self)
             else
-            {
+            {*/
                 // Get OIM User
                 HashSet<String> attrs = new HashSet<String>();
                 attrs.add(UserManagerConstants.AttributeName.MIDDLENAME.getId()); // Middle Name
                 attrs.add(UserManagerConstants.AttributeName.EMAIL.getId()); // Email
                 boolean useUserLogin = false;
                 user = USRMGR.getDetails(usrKey, attrs, useUserLogin);
-            }
+            //}
             
             LOGGER.log(ODLLevel.NOTIFICATION, "User: {0}", new Object[]{user});
            
