@@ -1,0 +1,5 @@
+<oimplugins xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <plugins pluginpoint="oracle.iam.platform.kernel.spi.EventHandler">  
+      <plugin name="ChangePasswordValidationEH" pluginclass="com.blogspot.oraclestack.eventhandlers.ChangePasswordValidationEH" version="1.0">
+   </plugin></plugins>             
+</oimplugins>
