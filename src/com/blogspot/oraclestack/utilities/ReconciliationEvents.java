@@ -4,6 +4,7 @@ import Thor.API.Exceptions.tcAPIException;
 import Thor.API.Exceptions.tcAttributeNotFoundException;
 import Thor.API.Exceptions.tcEventDataReceivedException;
 import Thor.API.Exceptions.tcEventNotFoundException;
+import Thor.API.Exceptions.tcObjectNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class ReconciliationEvents
      * @param reconFieldData    Map of the reconciliation field data. Key is the name of the reconciliation field and value is the data.
      * @throws tcAPIException 
      */
-    public void makeReconciliationEvent(String resourceObjName, HashMap<String,Object> reconFieldData) throws tcAPIException
+    public void makeReconciliationEvent(String resourceObjName, HashMap<String,Object> reconFieldData) throws tcAPIException, tcObjectNotFoundException
     {
         logger.log(ODLLevel.NOTIFICATION, "Enter makeReconciliationEvent() with parameters: Resource Object Name = [{0}], Reconciliation Data = [{1}]", new Object[]{resourceObjName, reconFieldData});
         
@@ -52,14 +53,21 @@ public class ReconciliationEvents
         evtAttrs.setActionDate(null); // Processing is done instantly; no defering date
         evtAttrs.setChangeType(ChangeType.REGULAR); // For create and modify operations
         
-        // Call OIM API to create reconciliation event 
-        long reconEventKey = this.reconOps.createReconciliationEvent(resourceObjName, reconFieldData, evtAttrs);
-        logger.log(ODLLevel.NOTIFICATION, "Reconciliation Event Key = [{0}]", new Object[]{reconEventKey});
+        // Determine if event needs to be ignored (E.g. No change)
+        boolean ignoreEvent = this.reconOps.ignoreEvent(resourceObjName, reconFieldData);
+        logger.log(ODLLevel.NOTIFICATION, "Ignore event? {0}", new Object[]{ignoreEvent});
+       
+        if(!ignoreEvent)
+        {
+            // Call OIM API to create reconciliation event 
+            long reconEventKey = this.reconOps.createReconciliationEvent(resourceObjName, reconFieldData, evtAttrs);
+            logger.log(ODLLevel.NOTIFICATION, "Reconciliation Event Key = [{0}]", new Object[]{reconEventKey});
         
-        // Call OIM API to process reconciliation event (apply action and matching rules, and link to appropriate user, org, or process instance)
-        this.reconOps.processReconciliationEvent(reconEventKey);
-        logger.log(ODLLevel.NOTIFICATION, "Processed Recon Event.");
-        
+            // Call OIM API to process reconciliation event (apply action and matching rules, and link to appropriate user, org, or process instance)
+            this.reconOps.processReconciliationEvent(reconEventKey);
+            logger.log(ODLLevel.NOTIFICATION, "Processed Recon Event.");
+        }
+                
         // Close Event
         // this.reconOps.closeReconciliationEvent(reconEventKey);
         // logger.log(ODLLevel.NOTIFICATION, "Closed event.");
