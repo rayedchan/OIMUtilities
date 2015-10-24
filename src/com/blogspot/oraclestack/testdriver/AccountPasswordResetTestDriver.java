@@ -3,20 +3,18 @@ package com.blogspot.oraclestack.testdriver;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Locale;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.core.ojdl.logging.ODLLogger;
-import oracle.iam.identity.exception.NoSuchUserException;
-import oracle.iam.identity.exception.UserLookupException;
 import oracle.iam.identity.usermgmt.api.UserManager;
 import oracle.iam.identity.usermgmt.api.UserManagerConstants;
 import oracle.iam.identity.usermgmt.vo.User;
+import oracle.iam.passwordmgmt.api.PasswordMgmtService;
+import oracle.iam.passwordmgmt.vo.ValidationResult;
 import oracle.iam.platform.OIMClient;
-import oracle.iam.platform.authz.exception.AccessDeniedException;
 import oracle.iam.platform.entitymgr.vo.SearchCriteria;
 import oracle.iam.provisioning.api.ProvisioningConstants;
 import oracle.iam.provisioning.api.ProvisioningService;
-import oracle.iam.provisioning.exception.GenericProvisioningException;
-import oracle.iam.provisioning.exception.UserNotFoundException;
 import oracle.iam.provisioning.vo.Account;
 
 /**
@@ -63,30 +61,54 @@ public class AccountPasswordResetTestDriver
             // Get API Service
             UserManager usrMgr = oimClient.getService(UserManager.class);
             ProvisioningService provService = oimClient.getService(ProvisioningService.class);
+            PasswordMgmtService pwdMgmtService = oimClient.getService(PasswordMgmtService.class); 
             
             // Change variable values accordinly
             String userLogin = "ASKYWALKER"; // OIM User Login
             String resourceObjectName = "LDAP User";  // Resource Object Name
-            char[] newPassword = "LightSaberV".toCharArray();
+            char[] newPassword = "#LightSaber".toCharArray();
             
-            // Call helper method to get user's accounts 
-            List<Account> accounts = getUserAccounts(usrMgr, provService, userLogin, resourceObjectName);
+            // Get user's details
+            boolean useUserLogin = true;
+            HashSet<String> retAttrs = new HashSet<String>();
+            retAttrs.add(UserManagerConstants.AttributeName.USER_KEY.getId()); // usr_key
+            User user = usrMgr.getDetails(userLogin, retAttrs, useUserLogin);
+            LOG.log(ODLLevel.INFO, "User: {0}", new Object[]{user});
+            String userKey = user.getId(); // Get usr_key
+
+            // Get user's resource accounts
+            SearchCriteria criteria = new SearchCriteria(ProvisioningConstants.AccountSearchAttribute.OBJ_NAME.getId(), resourceObjectName, SearchCriteria.Operator.EQUAL);       
+            List<Account> accounts = provService.getAccountsProvisionedToUser(userKey, criteria, null, useUserLogin);
+            LOG.log(ODLLevel.INFO, "User''s Accounts: {0}", new Object[]{accounts});
             Account resourceAcct = accounts.isEmpty() ? null : accounts.get(0); // Grab first item
 
             if(resourceAcct != null)
             {        
                 String accountId = resourceAcct.getAccountID(); // oiu_key
                 Long procInstFormKey = resourceAcct.getAppInstance().getAccountForm().getFormKey(); // Process Form Instance Key
+                String appInstName = resourceAcct.getAppInstance().getApplicationInstanceName();
                 LOG.log(ODLLevel.INFO, "Account Id: {0}", new Object[]{accountId});
                 LOG.log(ODLLevel.INFO, "Process Instance Form Key: {0}", new Object[]{procInstFormKey});
+                LOG.log(ODLLevel.INFO, "Application Instance Name: {0}", new Object[]{appInstName});
+                
+                // Validate new password against account password policy
+                ValidationResult  vr = pwdMgmtService.validatePasswordAgainstPolicy(newPassword, user, appInstName, Locale.getDefault());
+                boolean isNewPasswordValid = vr.isPasswordValid();
+                LOG.log(ODLLevel.INFO, "Passes Account Password Policy? {0}", new Object[]{isNewPasswordValid});
+                
+                // Perfrom account password change if account password policy passes
+                if(isNewPasswordValid)
+                {
+                    // TODO: Account Password History being bypassed in validatePasswordAgainstPolicy. 
+                    
+                    // Change resource account password
+                    provService.changeAccountPassword(Long.valueOf(accountId), newPassword);
+                    LOG.log(ODLLevel.INFO, "Successfully changed resource account password.");
 
-                // Change resource account password
-                provService.changeAccountPassword(Long.valueOf(accountId), newPassword);
-                LOG.log(ODLLevel.INFO, "Successfully changed resource account password.");
-        
-                // Confirm resource account password; This checks if the password on the process form is identical to the supplied value
-                boolean confirmAcctPwd =  provService.confirmAccountPassword(Long.valueOf(accountId), newPassword);
-                LOG.log(ODLLevel.INFO, "Confirm Account Password? {0}", new Object[]{confirmAcctPwd});
+                    // Confirm resource account password; This checks if the password on the process form is identical to the supplied value
+                    boolean confirmAcctPwd =  provService.confirmAccountPassword(Long.valueOf(accountId), newPassword);
+                    LOG.log(ODLLevel.INFO, "Confirm Account Password? {0}", new Object[]{confirmAcctPwd});
+                }
             }
         }
         
@@ -97,37 +119,5 @@ public class AccountPasswordResetTestDriver
                 oimClient.logout();
             } 
         }
-    }
-    
-    /**
-     * Get a user's accounts filtered by resource object name
-     * @param usrMgr                User Manager Service
-     * @param provService           Provisioning Service
-     * @param userLogin             OIM User Login
-     * @param resourceObjectName    Resource Object Name
-     * @return list of accounts with a specific resource object
-     * @throws AccessDeniedException
-     * @throws NoSuchUserException
-     * @throws UserLookupException
-     * @throws UserNotFoundException
-     * @throws GenericProvisioningException 
-     */
-    public static List<Account> getUserAccounts(UserManager usrMgr, ProvisioningService provService, String userLogin, String resourceObjectName) throws AccessDeniedException, NoSuchUserException, UserLookupException, UserNotFoundException, GenericProvisioningException
-    {
-        boolean useUserLogin = true;
-        HashSet<String> retAttrs = new HashSet<String>();
-        retAttrs.add(UserManagerConstants.AttributeName.USER_KEY.getId()); // usr_key
-
-        // Get user's key
-        User user = usrMgr.getDetails(userLogin, retAttrs, useUserLogin);
-        LOG.log(ODLLevel.INFO, "User: {0}", new Object[]{user});
-        String userKey = user.getId(); // Get usr_key
-
-        // Get user's resource accounts
-        SearchCriteria criteria = new SearchCriteria(ProvisioningConstants.AccountSearchAttribute.OBJ_NAME.getId(), resourceObjectName, SearchCriteria.Operator.EQUAL);       
-        List<Account> accounts = provService.getAccountsProvisionedToUser(userKey, criteria, null, useUserLogin);
-        LOG.log(ODLLevel.INFO, "User''s Accounts: {0}", new Object[]{accounts});
-        
-        return accounts;
     }
 }
