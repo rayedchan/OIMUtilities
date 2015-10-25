@@ -66,7 +66,7 @@ public class AccountPasswordResetTestDriver
             // Change variable values accordinly
             String userLogin = "ASKYWALKER"; // OIM User Login
             String resourceObjectName = "LDAP User";  // Resource Object Name
-            char[] newPassword = "#LightSaber".toCharArray();
+            char[] newPassword = "#LightSaber7".toCharArray();
             
             // Get user's details
             boolean useUserLogin = true;
@@ -85,7 +85,7 @@ public class AccountPasswordResetTestDriver
             if(resourceAcct != null)
             {        
                 String accountId = resourceAcct.getAccountID(); // oiu_key
-                Long procInstFormKey = resourceAcct.getAppInstance().getAccountForm().getFormKey(); // Process Form Instance Key
+                String procInstFormKey = resourceAcct.getProcessInstanceKey(); // Process Form Instance Key
                 String appInstName = resourceAcct.getAppInstance().getApplicationInstanceName();
                 LOG.log(ODLLevel.INFO, "Account Id: {0}", new Object[]{accountId});
                 LOG.log(ODLLevel.INFO, "Process Instance Form Key: {0}", new Object[]{procInstFormKey});
