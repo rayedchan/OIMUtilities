@@ -16,11 +16,12 @@ import java.util.List;
 import java.util.Set;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.core.ojdl.logging.ODLLogger;
-import oracle.iam.identity.usermgmt.api.UserManager;
 import oracle.iam.identity.usermgmt.vo.User;
+import oracle.iam.identity.vo.Identity;
 import oracle.iam.platform.Platform;
 import oracle.iam.platform.entitymgr.vo.SearchCriteria;
 import oracle.iam.platform.kernel.EventFailedException;
+import oracle.iam.platform.kernel.spi.ConditionalEventHandler;
 import oracle.iam.platform.kernel.spi.PostProcessHandler;
 import oracle.iam.platform.kernel.vo.AbstractGenericOrchestration;
 import oracle.iam.platform.kernel.vo.BulkEventResult;
@@ -34,33 +35,80 @@ import oracle.iam.provisioning.exception.UserNotFoundException;
 import oracle.iam.provisioning.vo.Account;
 
 /**
- * This event handler supports the following user lifecycle events:
+ * This event handler supports the following user life-cycle events:
  * Enable, Disable, Lock, Unlock
  * On each operation, the corresponding lookup definition is used to
  * determine which process tasks to call for the downstream resource accounts.
  * @author rayedchan
  */
-public class UserLifecyclePostprocessEH implements PostProcessHandler
+public class UserLifecyclePostprocessEH implements ConditionalEventHandler, PostProcessHandler
 {
     // Logger
     private static final ODLLogger LOGGER = ODLLogger.getODLLogger(UserLifecyclePostprocessEH.class.getName());
     
     // OIM API Service
-    private static final UserManager USR_MGR_SERVICE = Platform.getServiceForEventHandlers(UserManager.class, null, "ADMIN","UserLifecyclePostprocessEH", null);
     private static final ProvisioningService PROV_SERVICE = Platform.getService(ProvisioningService.class);
     
-    // Lookups Application Instance to Process Tasks Mapping
-    private static final String LOOKUP_USER_LOCK_APPINSTNAME_PROCTASKS = "Lookup.User.Lock.AppInstNameToProcessTasks"; 
-    private static final String LOOKUP_USER_UNLOCK_APPINSTNAME_PROCTASKS = "Lookup.User.Unlock.AppInstNameToProcessTasks";
-    private static final String LOOKUP_USER_ENABLE_APPINSTNAME_PROCTASKS = "Lookup.User.Enable.AppInstNameToProcessTasks"; 
-    private static final String LOOKUP_USER_DISABLE_APPINSTNAME_PROCTASKS = "Lookup.User.Disable.AppInstNameToProcessTasks";
+    // Lookups Application Instance Display Name to Process Tasks Mapping
+    private static final String LOOKUP_USER_LOCK_APPINST_DISPLAYNAME_PROCTASKS = "Lookup.User.Lock.AppInstDisplayNameToProcessTasks"; 
+    private static final String LOOKUP_USER_UNLOCK_APPINST_DISPLAYNAME_PROCTASKS = "Lookup.User.Unlock.AppInstDisplayNameToProcessTasks";
+    private static final String LOOKUP_USER_ENABLE_APPINST_DISPLAYNAME_PROCTASKS = "Lookup.User.Enable.AppInstDisplayNameToProcessTasks"; 
+    private static final String LOOKUP_USER_DISABLE_APPINST_DISPLAYNAME_PROCTASKS = "Lookup.User.Disable.AppInstDisplayNameToProcessTasks";
 
     // Internal Map to map an operation to a lookup
-    public HashMap<String,String> operationToLookup = new HashMap<String,String>();
+    private HashMap<String,String> operationToLookup = new HashMap<String,String>();
     
     // Delimiter for separating multiple process tasks
-    public static final String DELIMITER = ",";
+    private static final String DELIMITER = ",";
     
+    // Operations supported for this event handler
+    String[] supportedOps = {"DISABLE","ENABLE","LOCK","UNLOCK"}; // Used in isApplicable()
+    
+    /**
+     * Determine to execute event handler if supported operation is provided.
+     * NOTE: LOCK operation might have to be in a separate event handler. On locking of a user
+     * lock and modify operations happen. Preventing the modify operation stop this event handler
+     * from continuing.
+     * @param ago   Orchestration
+     * @return true to proceed execution of event handler; false to end execution of event handler
+     */
+    @Override
+    public boolean isApplicable(AbstractGenericOrchestration ago) 
+    {
+        String operation = ago.getOperation();
+        LOGGER.log(ODLLevel.NOTIFICATION, "Operation: {0}", new Object[]{operation});
+        boolean proceed = false;
+        
+        for(String op : this.supportedOps)
+        {
+            if(op.equals(operation))
+            {
+                proceed = true;
+            }
+        }
+        
+        LOGGER.log(ODLLevel.NOTIFICATION, "Execute Event Handler: {0}", new Object[]{proceed});
+        return proceed;
+    }
+    
+     /**
+     * Call to initialize event handler.
+     * @param hm 
+     */
+    @Override
+    public void initialize(HashMap<String, String> hm)
+    {
+        LOGGER.log(ODLLevel.NOTIFICATION, "Begin Initialize: {0}", new Object[]{hm});
+        
+        // Map operation-lookup pair
+        this.operationToLookup.put("DISABLE", LOOKUP_USER_DISABLE_APPINST_DISPLAYNAME_PROCTASKS);
+        this.operationToLookup.put("ENABLE", LOOKUP_USER_ENABLE_APPINST_DISPLAYNAME_PROCTASKS);
+        this.operationToLookup.put("LOCK", LOOKUP_USER_LOCK_APPINST_DISPLAYNAME_PROCTASKS);
+        this.operationToLookup.put("UNLOCK", LOOKUP_USER_UNLOCK_APPINST_DISPLAYNAME_PROCTASKS);
+        
+        LOGGER.log(ODLLevel.NOTIFICATION, "End Initialize: {0}", new Object[]{this.operationToLookup});
+    }
+        
     /**
      * Single event 
      * @param processId
@@ -114,15 +162,15 @@ public class UserLifecyclePostprocessEH implements PostProcessHandler
             User oldUserState = (User) interEventData.get("CURRENT_USER");
             LOGGER.log(ODLLevel.TRACE, "Old User: {0}", new Object[]{oldUserState});
                         
-            // Get Resource To Process Tasks Lookup; Code is Resource Object Name; Decode is String delimited Process Tasks
-            HashMap<String,String> resourceToProcTasksMap = this.convertLookupToMap(appInstToProcTaskLookup, lookupOps);
-            LOGGER.log(ODLLevel.INFO, "Resource To Process Tasks Mapping: [{0}]", new Object[]{resourceToProcTasksMap});
+            // Get Resource To Process Tasks Lookup; Code is Application Instance Display Name Name; Decode is String delimited Process Tasks
+            HashMap<String,String> appInstDisplayNameToProcTasksMap = this.convertLookupToMap(appInstToProcTaskLookup, lookupOps);
+            LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Display Name To Process Tasks Mapping: {0}", new Object[]{appInstDisplayNameToProcTasksMap});
             
             // Construct criteria based on application instance display name given in lookup (code key)
-            SearchCriteria criteria = this.constructOrCriteria(resourceToProcTasksMap.keySet(), ProvisioningConstants.AccountSearchAttribute.DISPLAY_NAME.getId());
+            SearchCriteria criteria = this.constructOrCriteria(appInstDisplayNameToProcTasksMap.keySet(), ProvisioningConstants.AccountSearchAttribute.DISPLAY_NAME.getId());
             
             // Execute event
-            this.callProcessTasksForUserResourceAccounts(newUserState, provOps, taskDefOps, PROV_SERVICE, resourceToProcTasksMap, criteria);       
+            this.callProcessTasksForUserResourceAccounts(newUserState, provOps, taskDefOps, PROV_SERVICE, appInstDisplayNameToProcTasksMap, criteria);       
         } 
         
         catch (tcInvalidLookupException e) 
@@ -198,163 +246,127 @@ public class UserLifecyclePostprocessEH implements PostProcessHandler
     @Override
     public BulkEventResult execute(long processId, long eventId, BulkOrchestration bulkOrchestration) 
     {
-        /*LOGGER.log(ODLLevel.NOTIFICATION, "Enter execute() with parameters: Process Id = [{0}], Event Id = [{1}], Bulk Orchestration = [{2}]", new Object[]{processId, eventId, bulkOrchestration});
-        boolean failedProcess = false;
-        boolean failedProcessPerUser = false;
-        Exception exception = null;
+        LOGGER.log(ODLLevel.NOTIFICATION, "Enter execute() with parameters: Process Id = [{0}], Event Id = [{1}], Bulk Orchestration = [{2}]", new Object[]{processId, eventId, bulkOrchestration});
+        String appInstToProcTaskLookup = null;
+        
+        // OIM tc* Services
         tcProvisioningOperationsIntf provOps = null;
-        TaskDefinitionOperationsIntf taskDefOps = null; 
+        TaskDefinitionOperationsIntf taskDefOps = null;
+        tcLookupOperationsIntf lookupOps = null;
+        
+        // Get Target Type
+        String targetType = bulkOrchestration.getTarget().getType();
+        LOGGER.log(ODLLevel.NOTIFICATION, "Target type: {0}", new Object[]{targetType});
+        
+        // Get Operation
+        String operation = bulkOrchestration.getOperation();
+        LOGGER.log(ODLLevel.NOTIFICATION, "Operation: {0}", new Object[]{operation});
         
         try
         {
             // Get tc* Services
             provOps = Platform.getService(tcProvisioningOperationsIntf.class);
             taskDefOps = Platform.getService(TaskDefinitionOperationsIntf.class);
+            lookupOps = Platform.getService(tcLookupOperationsIntf.class);
             
-            // Get Resource To Process Tasks Lookup; Code is Resource Object Name; Decode is String delimited Process Tasks
-            HashMap<String,String> resourceToProcTasksMap = ResourceAttributeCalculation.convertLookupToMap(LOOKUP_USER_LOCK_RESOURCE_PROCTASKS);
-            LOGGER.log(ODLLevel.INFO, "Resource To Process Tasks Mapping: [{0}]", new Object[]{resourceToProcTasksMap});
+            // Get corresponding lookup for operation
+            appInstToProcTaskLookup = this.operationToLookup.get(operation);
+            LOGGER.log(ODLLevel.NOTIFICATION, "Using Lookup: {0}", new Object[]{appInstToProcTaskLookup});
             
-            // Construct criteria based on resource object given in lookup
-            int count = 0; // Used to construct criteria
-            SearchCriteria resourceObjectsCriteria = null; // Used to filter for certain resource objects
-            // Iterate all the resource objects given in lookup map to construct criteria
-            for(String resourceObjectName: resourceToProcTasksMap.keySet()) 
-            {
-                // One criteria
-                if(count == 0) 
-                {
-                    resourceObjectsCriteria = new SearchCriteria(ProvisioningConstants.AccountSearchAttribute.OBJ_NAME.getId(), resourceObjectName, SearchCriteria.Operator.EQUAL);     
-                }
-                
-                // Appending OR criteria
-                else 
-                {
-                    SearchCriteria entCriteria = new SearchCriteria(ProvisioningConstants.AccountSearchAttribute.OBJ_NAME.getId(), resourceObjectName, SearchCriteria.Operator.EQUAL);     
-                    resourceObjectsCriteria = new SearchCriteria(resourceObjectsCriteria, entCriteria, SearchCriteria.Operator.OR);
-                }
-                
-                count++;
-            }
+            // Get Resource To Process Tasks Lookup; Code is Application Instance Display Name Name; Decode is String delimited Process Tasks
+            HashMap<String,String> appInstDisplayNameToProcTasksMap = this.convertLookupToMap(appInstToProcTaskLookup, lookupOps);
+            LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Display Name To Process Tasks Mapping: {0}", new Object[]{appInstDisplayNameToProcTasksMap});
+            
+            // Construct criteria based on application instance display name given in lookup (code key)
+            SearchCriteria criteria = this.constructOrCriteria(appInstDisplayNameToProcTasksMap.keySet(), ProvisioningConstants.AccountSearchAttribute.DISPLAY_NAME.getId());
             
             // Get the user records from the orchestration argument
             String[] entityIds = bulkOrchestration.getTarget().getAllEntityId();
+            int numUsers = entityIds.length;
+            LOGGER.log(ODLLevel.NOTIFICATION, "{0} user keys: {1}", new Object[]{numUsers, Arrays.toString(entityIds)});
             
-            // Get interParameters
-            HashMap<String, Serializable> interParameters = bulkOrchestration.getInterEventData();
+            // Get InterEventData
+            HashMap<String, Serializable> interEventData = bulkOrchestration.getInterEventData();
+            LOGGER.log(ODLLevel.TRACE, "InterEventData: {0}", new Object[]{interEventData});
         
             // Get the new state of all users
-            Object usersObj = interParameters.get("NEW_USER_STATE");
+            Object usersObj = interEventData.get("NEW_USER_STATE");
             Identity[] users  = (Identity[]) usersObj;
             
             // Get the old state of all users
-            Object prevUsersObj = interParameters.get("CURRENT_USER");
+            Object prevUsersObj = interEventData.get("CURRENT_USER");
             Identity[] prevUsers  = (Identity[]) prevUsersObj;
                                 
             // Iterate each OIM user
-            for (int i = 0; i < entityIds.length; i++) 
+            for(int i = 0; i < numUsers; i++) 
             {
-                failedProcessPerUser = false;
-                
+                // Get USR_KEY of current userbeing modified
+                String userKey = entityIds[i];
+                LOGGER.log(ODLLevel.NOTIFICATION, "Target OIM User Key: {0}", new Object[]{userKey});
+
+                // Get new user state
+                User newUserState = (User) users[i];
+                LOGGER.log(ODLLevel.TRACE, "New User State: {0}", new Object[]{newUserState});
+
+                // Get old user state
+                User oldUserState = (User) prevUsers[i];
+                LOGGER.log(ODLLevel.TRACE, "Old User State: {0}", new Object[]{oldUserState});
+                    
                 try
-                {
-                    // Get USR_KEY of current userbeing modified
-                    String userKey = entityIds[i];
-                    LOGGER.log(ODLLevel.NOTIFICATION, "Target OIM User Key: [{0}]", new Object[]{userKey});
-        
-                    // Get Target Type
-                    String targetType = bulkOrchestration.getTarget().getType();
-                    LOGGER.log(ODLLevel.NOTIFICATION, "Target type: [{0}]", new Object[]{targetType});
-        
-                    // Get new user state
-                    User user = (User) users[i];
-                    LOGGER.log(ODLLevel.TRACE, "New User State: [{0}]", new Object[]{user});
-                    
-                    // Get old user state
-                    User oldUser = (User) prevUsers[i];
-                    LOGGER.log(ODLLevel.TRACE, "Old User State: [{0}]", new Object[]{oldUser});
-                    
-                    // Check user access control type
-                    String accessControlType = (String) user.getAttribute(UserDefinedFields.UDF_ACCESS_CONTROL_TYPE);
-                    LOGGER.log(ODLLevel.NOTIFICATION, "Access Control Type: [{0}]", new Object[]{accessControlType});
-                    
-                    // Only process users whose access control type is SUS.
-                    if ("SUS".equals(accessControlType))
-                    {
-                        // Process single event
-                        this.executeEvent(user, provOps, taskDefOps, resourceToProcTasksMap, resourceObjectsCriteria);  
-                    }
-                    
-                    else
-                    {
-                        LOGGER.log(ODLLevel.NOTIFICATION, "Access Control Type is not SUS; no action taken for {0}.", new Object[]{user.getLogin()});
-                    }
+                {                    
+                    // Execute event
+                    this.callProcessTasksForUserResourceAccounts(newUserState, provOps, taskDefOps, PROV_SERVICE, appInstDisplayNameToProcTasksMap, criteria);
                 }
                 
                 catch (UserNotFoundException e) 
                 {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                    failedProcessPerUser = true;
-                    exception = e;      
+                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);      
                 } 
                 
                 catch (GenericProvisioningException e) 
                 {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                    failedProcessPerUser = true;
-                    exception = e;      
+                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);    
                 }
                 
                 catch (tcAPIException e) 
                 {
                     LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                    failedProcessPerUser = true;
-                    exception = e;
                 } 
                 
                 catch (tcColumnNotFoundException e)
                 {
                     LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                    failedProcessPerUser = true;
-                    exception = e;
                 } 
                 
                 catch (tcTaskNotFoundException e)
                 {
                     LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                    failedProcessPerUser = true;
-                    exception = e;
                 }
 
                 catch(Exception e)
                 {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                    failedProcessPerUser = true;
-                    exception = e;
-                }
-                
-                finally 
-                {
-                    if(failedProcessPerUser == true) 
-                    {   
-                        LOGGER.log(ODLLevel.ERROR, "Send notification to administrator for failed user");
-                        HashMap<String,Object> templateParameters = new HashMap<String,Object>();
-                        templateParameters.put(NotificationParameters.PROCESS.toString(), PROCESS);
-                        templateParameters.put(NotificationParameters.EXCEPTIONCODE.toString(), "N/A");
-                        templateParameters.put(NotificationParameters.EXCEPTIONTEXT.toString(), exception.getMessage());
-                        notification.sendNotificationByRole(NotificationConstants.ADMINISTRATORS.toString(), NotificationConstants.EXCEPTION_TEMPLATE.toString(), templateParameters);
-                    }
+                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);;
                 }
             } 
-        } 
-        
-        catch(Exception e)
-        {
-            LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-            failedProcess = true;
-            exception = e;
         }
         
+        catch (tcColumnNotFoundException e) 
+        { 
+            LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
+            throw new EventFailedException(processId,"","","","", new Exception(e.getMessage()));
+        }
+        
+        catch (tcAPIException e) 
+        {        
+            LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
+            throw new EventFailedException(processId,"","","","", new Exception(e.getMessage()));
+        } 
+        
+        catch (tcInvalidLookupException e) 
+        {
+            LOGGER.log(ODLLevel.WARNING, MessageFormat.format("Continue {0} since lookup {1} does not exist: {2}.", new Object[]{operation, appInstToProcTaskLookup, e.getMessage()}), e);
+        } 
+
         finally 
         {
             // Close tc* service
@@ -368,47 +380,25 @@ public class UserLifecyclePostprocessEH implements PostProcessHandler
                 taskDefOps.close();
             }
             
-            if(failedProcess == true) 
+            if (lookupOps != null) 
             {
-                LOGGER.log(ODLLevel.ERROR, "Send notification to administrator to retry scheduled task");
-                HashMap<String,Object> templateParameters = new HashMap<String,Object>();
-                templateParameters.put(NotificationParameters.PROCESS.toString(), PROCESS);
-                templateParameters.put(NotificationParameters.EXCEPTIONCODE.toString(), "N/A");
-                templateParameters.put(NotificationParameters.EXCEPTIONTEXT.toString(), exception.getMessage());
-                notification.sendNotificationByRole(NotificationConstants.ADMINISTRATORS.toString(), NotificationConstants.EXCEPTION_TEMPLATE.toString(), templateParameters);
-                throw new EventFailedException(processId,"","","","", new Exception(exception.getMessage()));
+                lookupOps.close();
             }
-        }*/
+        }
         
         return new BulkEventResult();
     }
     
     @Override
-    public boolean cancel(long l, long l1, AbstractGenericOrchestration ago) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    /**
-     * Call to initialize event handler.
-     * @param hm 
-     */
-    @Override
-    public void initialize(HashMap<String, String> hm)
+    public boolean cancel(long l, long l1, AbstractGenericOrchestration ago) 
     {
-        LOGGER.log(ODLLevel.NOTIFICATION, "Begin Initialize: {0}", new Object[]{hm});
-        
-        // Map operation-lookup pair
-        operationToLookup.put("DISABLE", LOOKUP_USER_DISABLE_APPINSTNAME_PROCTASKS);
-        operationToLookup.put("ENABLE", LOOKUP_USER_ENABLE_APPINSTNAME_PROCTASKS);
-        operationToLookup.put("LOCK", LOOKUP_USER_LOCK_APPINSTNAME_PROCTASKS);
-        operationToLookup.put("UNLOCK", LOOKUP_USER_UNLOCK_APPINSTNAME_PROCTASKS);
-        
-        LOGGER.log(ODLLevel.NOTIFICATION, "End Initialize.");
+        return false;
     }
 
     @Override
-    public void compensate(long l, long l1, AbstractGenericOrchestration ago) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void compensate(long l, long l1, AbstractGenericOrchestration ago) 
+    {
+        
     }
     
     /**
@@ -441,7 +431,7 @@ public class UserLifecyclePostprocessEH implements PostProcessHandler
     
     /**
      * Manually call process tasks on a user's resource accounts based on a lookup definition or a constructed Map.
-     * The code key is the resource object name and the decode value is a comma-delimited value of each
+     * The code key is the application instance display name and the decode value is a comma-delimited value of each
      * process task name to call.
      * @param user                      OIM User
      * @param provOps                   Provisioning Service
@@ -463,7 +453,6 @@ public class UserLifecyclePostprocessEH implements PostProcessHandler
         HashMap<String,Object> configParams = null;
         LOGGER.log(ODLLevel.INFO, "Begin event for user: USR_KEY = {0}, User Login = {1}", new Object[]{userKey, userLogin}); 
         
-        //ProvisioningConstants.AccountSearchAttribute.APPINST_NAME
         // Get user's resource accounts based on criteria     
         List<Account> accounts = provService.getAccountsProvisionedToUser(userKey, resourceObjectsCriteria, configParams, populateAccountData); // API will return nothing if null criteria is provided 
         LOGGER.log(ODLLevel.INFO, "Total Accounts to Process: {0}", new Object[]{accounts.size()});
@@ -475,15 +464,17 @@ public class UserLifecyclePostprocessEH implements PostProcessHandler
            String procInstFormKey = resourceAcct.getProcessInstanceKey(); // (ORC_KEY) Process Form Instance Key 
            String appInstName = resourceAcct.getAppInstance().getApplicationInstanceName(); // Application Instance Name
            String resourceObjectName = resourceAcct.getAppInstance().getObjectName(); // Resource Object Name
+           String appInstDisplayName = resourceAcct.getAppInstance().getDisplayName(); // Application Instance Name
            LOGGER.log(ODLLevel.NOTIFICATION, "Account Id: {0}", new Object[]{accountId});
            LOGGER.log(ODLLevel.NOTIFICATION, "Process Instance Form Key: {0}", new Object[]{procInstFormKey});
            LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Name: {0}", new Object[]{appInstName});
            LOGGER.log(ODLLevel.NOTIFICATION, "Object Name: {0}", new Object[]{resourceObjectName});
+           LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Display Name: {0}", new Object[]{appInstDisplayName});
            
            // Get delimited process tasks from lookup
-           String delimitedProcTasks = resourceToProcTasksMap.get(resourceObjectName);
+           String delimitedProcTasks = resourceToProcTasksMap.get(appInstDisplayName);
            String[] procTaskNames = delimitedProcTasks.split(DELIMITER);
-           LOGGER.log(ODLLevel.TRACE, "Resource Object: {0}, Process Tasks: {1}", new Object[]{resourceObjectName, Arrays.asList(procTaskNames)});
+           LOGGER.log(ODLLevel.TRACE, "Application Instance Display Name: {0}, Process Tasks: {1}", new Object[]{appInstDisplayName, Arrays.asList(procTaskNames)});
            
            // Handle resource accounts that been written to UD table.
            // This excludes resources in Waiting State
@@ -524,7 +515,7 @@ public class UserLifecyclePostprocessEH implements PostProcessHandler
             
            else 
            {
-               LOGGER.log(ODLLevel.NOTIFICATION, "Skip resource {0}. Status = {1}", new Object[]{appInstName, resourceAcct.getAccountStatus()});
+               LOGGER.log(ODLLevel.NOTIFICATION, "Skip resource {0}. Status = {1}", new Object[]{appInstDisplayName, resourceAcct.getAccountStatus()});
            }
         }
                 
