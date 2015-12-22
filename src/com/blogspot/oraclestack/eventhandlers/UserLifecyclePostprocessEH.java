@@ -39,6 +39,12 @@ import oracle.iam.provisioning.vo.Account;
  * Enable, Disable, Lock, Unlock
  * On each operation, the corresponding lookup definition is used to
  * determine which process tasks to call for the downstream resource accounts.
+ * 
+ * NOTE: LOCK operation might have to be in a separate event handler. On locking of a user
+ * lock and modify operations happen. Preventing the modify operation stop this event handler
+ * from continuing. It is recommended to use this event handler on a specific operation
+ * rather than ANY operation.
+ * 
  * @author rayedchan
  */
 public class UserLifecyclePostprocessEH implements ConditionalEventHandler, PostProcessHandler
@@ -62,13 +68,10 @@ public class UserLifecyclePostprocessEH implements ConditionalEventHandler, Post
     private static final String DELIMITER = ",";
     
     // Operations supported for this event handler
-    String[] supportedOps = {"DISABLE","ENABLE","LOCK","UNLOCK"}; // Used in isApplicable()
+    String[] supportedOps = {"DISABLE","ENABLE","LOCK","UNLOCK", "MODIFY"}; // Used in isApplicable()
     
     /**
      * Determine to execute event handler if supported operation is provided.
-     * NOTE: LOCK operation might have to be in a separate event handler. On locking of a user
-     * lock and modify operations happen. Preventing the modify operation stop this event handler
-     * from continuing.
      * @param ago   Orchestration
      * @return true to proceed execution of event handler; false to end execution of event handler
      */
@@ -146,31 +149,38 @@ public class UserLifecyclePostprocessEH implements ConditionalEventHandler, Post
             appInstToProcTaskLookup = this.operationToLookup.get(operation);
             LOGGER.log(ODLLevel.NOTIFICATION, "Using Lookup: {0}", new Object[]{appInstToProcTaskLookup});
             
-            // Get USR_KEY of current user being modified
-            String userKey = orchestration.getTarget().getEntityId();
-            LOGGER.log(ODLLevel.NOTIFICATION, "Target OIM User Key: {0}", new Object[]{userKey});
-            
-            // Contains old and new values of target user
-            HashMap<String, Serializable> interEventData = orchestration.getInterEventData();
-            LOGGER.log(ODLLevel.TRACE, "InterEventData: {0}", new Object[]{interEventData});
-            
-            // Get new user state
-            User newUserState = (User) interEventData.get("NEW_USER_STATE");
-            LOGGER.log(ODLLevel.TRACE, "User: {0}", new Object[]{newUserState});
-            
-            // Get old user state
-            User oldUserState = (User) interEventData.get("CURRENT_USER");
-            LOGGER.log(ODLLevel.TRACE, "Old User: {0}", new Object[]{oldUserState});
-                        
-            // Get Resource To Process Tasks Lookup; Code is Application Instance Display Name Name; Decode is String delimited Process Tasks
-            HashMap<String,String> appInstDisplayNameToProcTasksMap = this.convertLookupToMap(appInstToProcTaskLookup, lookupOps);
-            LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Display Name To Process Tasks Mapping: {0}", new Object[]{appInstDisplayNameToProcTasksMap});
-            
-            // Construct criteria based on application instance display name given in lookup (code key)
-            SearchCriteria criteria = this.constructOrCriteria(appInstDisplayNameToProcTasksMap.keySet(), ProvisioningConstants.AccountSearchAttribute.DISPLAY_NAME.getId());
-            
-            // Execute event
-            this.callProcessTasksForUserResourceAccounts(newUserState, provOps, taskDefOps, PROV_SERVICE, appInstDisplayNameToProcTasksMap, criteria);       
+            if(appInstToProcTaskLookup != null && !"".equalsIgnoreCase(appInstToProcTaskLookup))
+            {
+                 // Get USR_KEY of current user being modified
+                String userKey = orchestration.getTarget().getEntityId();
+                LOGGER.log(ODLLevel.NOTIFICATION, "Target OIM User Key: {0}", new Object[]{userKey});
+                
+                // Get modified parameters
+                HashMap<String,Serializable> modParams = orchestration.getParameters();
+                LOGGER.log(ODLLevel.NOTIFICATION, "Modified Parameters: {0}", new Object[]{modParams});
+
+                // Contains old and new values of target user
+                HashMap<String, Serializable> interEventData = orchestration.getInterEventData();
+                LOGGER.log(ODLLevel.TRACE, "InterEventData: {0}", new Object[]{interEventData});
+
+                // Get new user state
+                User newUserState = (User) interEventData.get("NEW_USER_STATE");
+                LOGGER.log(ODLLevel.TRACE, "User: {0}", new Object[]{newUserState});
+
+                // Get old user state
+                User oldUserState = (User) interEventData.get("CURRENT_USER");
+                LOGGER.log(ODLLevel.TRACE, "Old User: {0}", new Object[]{oldUserState});
+
+                // Get Resource To Process Tasks Lookup; Code is Application Instance Display Name Name; Decode is String delimited Process Tasks
+                HashMap<String,String> appInstDisplayNameToProcTasksMap = this.convertLookupToMap(appInstToProcTaskLookup, lookupOps);
+                LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Display Name To Process Tasks Mapping: {0}", new Object[]{appInstDisplayNameToProcTasksMap});
+
+                // Construct criteria based on application instance display name given in lookup (code key)
+                SearchCriteria criteria = this.constructOrCriteria(appInstDisplayNameToProcTasksMap.keySet(), ProvisioningConstants.AccountSearchAttribute.DISPLAY_NAME.getId());
+
+                // Execute event
+                this.callProcessTasksForUserResourceAccounts(newUserState, provOps, taskDefOps, PROV_SERVICE, appInstDisplayNameToProcTasksMap, criteria); 
+            }
         } 
         
         catch (tcInvalidLookupException e) 
@@ -273,81 +283,95 @@ public class UserLifecyclePostprocessEH implements ConditionalEventHandler, Post
             appInstToProcTaskLookup = this.operationToLookup.get(operation);
             LOGGER.log(ODLLevel.NOTIFICATION, "Using Lookup: {0}", new Object[]{appInstToProcTaskLookup});
             
-            // Get Resource To Process Tasks Lookup; Code is Application Instance Display Name Name; Decode is String delimited Process Tasks
-            HashMap<String,String> appInstDisplayNameToProcTasksMap = this.convertLookupToMap(appInstToProcTaskLookup, lookupOps);
-            LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Display Name To Process Tasks Mapping: {0}", new Object[]{appInstDisplayNameToProcTasksMap});
-            
-            // Construct criteria based on application instance display name given in lookup (code key)
-            SearchCriteria criteria = this.constructOrCriteria(appInstDisplayNameToProcTasksMap.keySet(), ProvisioningConstants.AccountSearchAttribute.DISPLAY_NAME.getId());
-            
-            // Get the user records from the orchestration argument
-            String[] entityIds = bulkOrchestration.getTarget().getAllEntityId();
-            int numUsers = entityIds.length;
-            LOGGER.log(ODLLevel.NOTIFICATION, "{0} user keys: {1}", new Object[]{numUsers, Arrays.toString(entityIds)});
-            
-            // Get InterEventData
-            HashMap<String, Serializable> interEventData = bulkOrchestration.getInterEventData();
-            LOGGER.log(ODLLevel.TRACE, "InterEventData: {0}", new Object[]{interEventData});
-        
-            // Get the new state of all users
-            Object usersObj = interEventData.get("NEW_USER_STATE");
-            Identity[] users  = (Identity[]) usersObj;
-            
-            // Get the old state of all users
-            Object prevUsersObj = interEventData.get("CURRENT_USER");
-            Identity[] prevUsers  = (Identity[]) prevUsersObj;
-                                
-            // Iterate each OIM user
-            for(int i = 0; i < numUsers; i++) 
+            if(appInstToProcTaskLookup != null && !"".equalsIgnoreCase(appInstToProcTaskLookup))
             {
-                // Get USR_KEY of current userbeing modified
-                String userKey = entityIds[i];
-                LOGGER.log(ODLLevel.NOTIFICATION, "Target OIM User Key: {0}", new Object[]{userKey});
+                // Get Resource To Process Tasks Lookup; Code is Application Instance Display Name Name; Decode is String delimited Process Tasks
+                HashMap<String,String> appInstDisplayNameToProcTasksMap = this.convertLookupToMap(appInstToProcTaskLookup, lookupOps);
+                LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Display Name To Process Tasks Mapping: {0}", new Object[]{appInstDisplayNameToProcTasksMap});
 
-                // Get new user state
-                User newUserState = (User) users[i];
-                LOGGER.log(ODLLevel.TRACE, "New User State: {0}", new Object[]{newUserState});
+                // Construct criteria based on application instance display name given in lookup (code key)
+                SearchCriteria criteria = this.constructOrCriteria(appInstDisplayNameToProcTasksMap.keySet(), ProvisioningConstants.AccountSearchAttribute.DISPLAY_NAME.getId());
 
-                // Get old user state
-                User oldUserState = (User) prevUsers[i];
-                LOGGER.log(ODLLevel.TRACE, "Old User State: {0}", new Object[]{oldUserState});
-                    
-                try
-                {                    
-                    // Execute event
-                    this.callProcessTasksForUserResourceAccounts(newUserState, provOps, taskDefOps, PROV_SERVICE, appInstDisplayNameToProcTasksMap, criteria);
-                }
-                
-                catch (UserNotFoundException e) 
-                {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);      
-                } 
-                
-                catch (GenericProvisioningException e) 
-                {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);    
-                }
-                
-                catch (tcAPIException e) 
-                {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                } 
-                
-                catch (tcColumnNotFoundException e)
-                {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                } 
-                
-                catch (tcTaskNotFoundException e)
-                {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
-                }
+                // Get the user records from the orchestration argument
+                String[] entityIds = bulkOrchestration.getTarget().getAllEntityId();
+                int numUsers = entityIds.length;
+                LOGGER.log(ODLLevel.NOTIFICATION, "{0} user keys: {1}", new Object[]{numUsers, Arrays.toString(entityIds)});
 
-                catch(Exception e)
+                // Get bulk Parameters
+                HashMap<String, Serializable>[] bulkParameters = bulkOrchestration.getBulkParameters();
+                int numEvents = bulkParameters.length;
+                LOGGER.log(ODLLevel.NOTIFICATION, "Number of Bulk Parameters Events: {0}", new Object[]{numEvents});
+                LOGGER.log(ODLLevel.TRACE, "Bulk Parameters: {0}", new Object[]{Arrays.toString(bulkParameters)});
+                
+                // Get InterEventData
+                HashMap<String, Serializable> interEventData = bulkOrchestration.getInterEventData();
+                LOGGER.log(ODLLevel.TRACE, "InterEventData: {0}", new Object[]{interEventData});
+
+                // Get the new state of all users
+                Object usersObj = interEventData.get("NEW_USER_STATE");
+                Identity[] users  = (Identity[]) usersObj;
+
+                // Get the old state of all users
+                Object prevUsersObj = interEventData.get("CURRENT_USER");
+                Identity[] prevUsers  = (Identity[]) prevUsersObj;
+
+                // Iterate each OIM user
+                for(int i = 0; i < numUsers; i++) 
                 {
-                    LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);;
-                }
-            } 
+                    // Get USR_KEY of current userbeing modified
+                    String userKey = entityIds[i];
+                    LOGGER.log(ODLLevel.NOTIFICATION, "Target OIM User Key: {0}", new Object[]{userKey});
+
+                    // Get new user state
+                    User newUserState = (User) users[i];
+                    LOGGER.log(ODLLevel.TRACE, "New User State: {0}", new Object[]{newUserState});
+
+                    // Get old user state
+                    User oldUserState = (User) prevUsers[i];
+                    LOGGER.log(ODLLevel.TRACE, "Old User State: {0}", new Object[]{oldUserState});
+
+                    try
+                    {                    
+                        // Execute event
+                        this.callProcessTasksForUserResourceAccounts(newUserState, provOps, taskDefOps, PROV_SERVICE, appInstDisplayNameToProcTasksMap, criteria);
+                    }
+
+                    catch (UserNotFoundException e) 
+                    {
+                        LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);      
+                    } 
+
+                    catch (GenericProvisioningException e) 
+                    {
+                        LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);    
+                    }
+
+                    catch (tcAPIException e) 
+                    {
+                        LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
+                    } 
+
+                    catch (tcColumnNotFoundException e)
+                    {
+                        LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
+                    } 
+
+                    catch (tcTaskNotFoundException e)
+                    {
+                        LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
+                    }
+
+                    catch(Exception e)
+                    {
+                        LOGGER.log(ODLLevel.ERROR, e.getMessage(), e);
+                    }
+                } 
+            }
+            
+            else
+            {
+                LOGGER.log(ODLLevel.WARNING,"Skipping event handler on unsupported operation: {0}", new Object[]{operation});
+            }
         }
         
         catch (tcColumnNotFoundException e) 
