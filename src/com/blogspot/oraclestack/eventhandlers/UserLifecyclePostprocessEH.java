@@ -489,11 +489,13 @@ public class UserLifecyclePostprocessEH implements ConditionalEventHandler, Post
            String appInstName = resourceAcct.getAppInstance().getApplicationInstanceName(); // Application Instance Name
            String resourceObjectName = resourceAcct.getAppInstance().getObjectName(); // Resource Object Name
            String appInstDisplayName = resourceAcct.getAppInstance().getDisplayName(); // Application Instance Name
+           String status = resourceAcct.getAccountStatus();
            LOGGER.log(ODLLevel.NOTIFICATION, "Account Id: {0}", new Object[]{accountId});
            LOGGER.log(ODLLevel.NOTIFICATION, "Process Instance Form Key: {0}", new Object[]{procInstFormKey});
            LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Name: {0}", new Object[]{appInstName});
            LOGGER.log(ODLLevel.NOTIFICATION, "Object Name: {0}", new Object[]{resourceObjectName});
            LOGGER.log(ODLLevel.NOTIFICATION, "Application Instance Display Name: {0}", new Object[]{appInstDisplayName});
+           LOGGER.log(ODLLevel.NOTIFICATION, "Account Status: {0}", new Object[]{status});
            
            // Get delimited process tasks from lookup
            String delimitedProcTasks = resourceToProcTasksMap.get(appInstDisplayName);
@@ -501,8 +503,8 @@ public class UserLifecyclePostprocessEH implements ConditionalEventHandler, Post
            LOGGER.log(ODLLevel.TRACE, "Application Instance Display Name: {0}, Process Tasks: {1}", new Object[]{appInstDisplayName, Arrays.asList(procTaskNames)});
            
            // Handle resource accounts that been written to UD table.
-           // This excludes resources in Waiting State
-           if(procInstFormKey != null && !procInstFormKey.equalsIgnoreCase("0"))
+           // This excludes resources in Waiting state, Revoked state, and Provisioning 
+           if(procInstFormKey != null && !procInstFormKey.equalsIgnoreCase("0") && !ProvisioningConstants.ObjectStatus.REVOKED.getId().equalsIgnoreCase(status) && !ProvisioningConstants.ObjectStatus.PROVISIONING.getId().equalsIgnoreCase(status))
            {
                // Call each process task instance for given resource account
                for(String procTaskName: procTaskNames) 
@@ -539,7 +541,7 @@ public class UserLifecyclePostprocessEH implements ConditionalEventHandler, Post
             
            else 
            {
-               LOGGER.log(ODLLevel.NOTIFICATION, "Skip resource {0}. Status = {1}", new Object[]{appInstDisplayName, resourceAcct.getAccountStatus()});
+               LOGGER.log(ODLLevel.NOTIFICATION, "Skip resource {0}. Status = {1}", new Object[]{appInstDisplayName, status});
            }
         }
                 
