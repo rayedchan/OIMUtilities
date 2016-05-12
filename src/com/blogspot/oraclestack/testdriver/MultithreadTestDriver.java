@@ -1,11 +1,17 @@
 package com.blogspot.oraclestack.testdriver;
 
+import Thor.API.Exceptions.tcAPIException;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.core.ojdl.logging.ODLLogger;
 import oracle.iam.platform.OIMClient;
@@ -14,7 +20,9 @@ import oracle.iam.reconciliation.api.ChangeType;
 import oracle.iam.reconciliation.api.ReconOperationsService;
 
 /**
- *
+ * Example of Multi-threading
+ * - Reads a CSV file containing data for a particular target or trusted resource
+ * - Each thread creates and process a reconciliation event
  * @author rayedchan
  */
 public class MultithreadTestDriver 
@@ -60,7 +68,7 @@ public class MultithreadTestDriver
             // Login to OIM with System Administrator Credentials
             oimClient.login(OIM_ADMIN_USERNAME, OIM_ADMIN_PASSWORD.toCharArray());
             
-            ReconOperationsService reconOps = oimClient.getService(ReconOperationsService.class);
+            //ReconOperationsService reconOps = oimClient.getService(ReconOperationsService.class);
             
             String csvFilePath = "/home/oracle/Desktop/psft_hrms_users.csv";
             FileReader fReader = new FileReader(csvFilePath); 
@@ -72,7 +80,7 @@ public class MultithreadTestDriver
             String dateFormat = "yyyy-MM-dd";
             Date actionDate = null; // Event to be processed immediately
             EventAttributes evtAttr = new EventAttributes(eventFinished, dateFormat, ChangeType.CHANGELOG, actionDate);
-            
+
             // Header Line
             String line = bReader.readLine();
             if(line == null || "".equalsIgnoreCase(line))
@@ -82,30 +90,28 @@ public class MultithreadTestDriver
             String[] header = line.split(delimiter);
             System.out.println(Arrays.asList(header));
             
-            // Process data entries
+            // Create thread pool      
+            int numOfThreads = 3;
+            ExecutorService threadExecutor = Executors.newFixedThreadPool(numOfThreads);
+            
+            // Initialize base configuration 
+            EventProcessor.initializeConfig(header, delimiter, resourceObject, evtAttr, LOGGER);
+            
+            // Process data entries using multi-threading
             line = bReader.readLine();
             while(line != null)
-            {
-                
-                String[] entry = line.split(delimiter);
-                HashMap<String,Object> reconEventData = new HashMap<String,Object>();
-                
-                // Iterate entry
-                for(int i = 0; i < entry.length; i++)
-                {
-                    String attributeName = header[i];
-                    String attributeValue = entry[i];
-                    reconEventData.put(attributeName, attributeValue);
-                }
-                
-                // Create Reconciliation Event
-                long reconKey = reconOps.createReconciliationEvent(resourceObject, reconEventData, evtAttr);
-                
-                // Process Reconciliation Event
-                reconOps.processReconciliationEvent(reconKey);
-                
+            {           
+                threadExecutor.execute(new EventProcessor(line));
                 line = bReader.readLine();
-            }  
+            }
+            
+            // Initate thread shutdown
+            threadExecutor.shutdown();
+            
+            while(!threadExecutor.isTerminated())
+            {
+                // Wait for all event processor threads to complete
+            }
         }
         
         catch(Exception ex)
@@ -135,15 +141,68 @@ public class MultithreadTestDriver
  */
 class EventProcessor implements Runnable
 {
-    private String entry = null;
+    // Fields needed for every event
+    private static String[] header;
+    private static String delimiter;
+    private static ODLLogger logger;
+    private static String resourceObjectName;
+    private static EventAttributes evtAttr;
+            
+    // Single entry in file
+    private String line;
+    private static ReconOperationsService reconOps;
     
-    public EventProcessor(String entry)
+    /**
+     * Constructor
+     * @param line Reconciliation event data
+     */
+    public EventProcessor(String line)
     {
-        this.entry = entry;
+        this.line = line;
+    }
+    
+    /**
+     * Initialize required parameters for processing events
+     * @param header    Header line of CSV file
+     * @param delimiter Delimiter that separates each attribute
+     */
+    public static void initializeConfig(String[] header, String delimiter, String resourceObjectName, EventAttributes evtAttr, ODLLogger logger)
+    {
+        EventProcessor.header = header;
+        EventProcessor.delimiter = delimiter;
+        EventProcessor.logger = logger;
+        EventProcessor.resourceObjectName = resourceObjectName;
+        EventProcessor.evtAttr = evtAttr;
     }
     
     public void run()
     {
+        String[] entry = line.split(delimiter);
+        HashMap<String,Object> reconEventData = new HashMap<String,Object>();
+
+        // Iterate entry to create mapping of attribute name and attribute value
+        for(int i = 0; i < entry.length; i++)
+        {
+            String attributeName = header[i];
+            String attributeValue = entry[i];
+            reconEventData.put(attributeName, attributeValue);
+        }
         
+        // TODO: Use Batch Method to create events
+        // Create Reconciliation Event
+        long reconKey = reconOps.createReconciliationEvent(resourceObjectName, reconEventData, evtAttr);
+        logger.log(ODLLevel.NOTIFICATION, "Created reconciliation event: Type = {0}, Event Id = {1}, Data = {2}", new Object[]{resourceObjectName, reconKey, reconEventData});
+        
+        try 
+        {
+            // Process Reconciliation Event
+            reconOps.processReconciliationEvent(reconKey);
+            logger.log(ODLLevel.NOTIFICATION, "Processed reconciliation event {0}", new Object[]{reconKey});
+        } 
+        
+        catch (tcAPIException ex) 
+        {
+            logger.log(ODLLevel.SEVERE, MessageFormat.format("Failed to process reconciliation event {0}", new Object[]{reconKey}), ex);
+        }
     }
 }
