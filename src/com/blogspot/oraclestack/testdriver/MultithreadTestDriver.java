@@ -4,10 +4,12 @@ import Thor.API.Exceptions.tcAPIException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -17,7 +19,9 @@ import oracle.core.ojdl.logging.ODLLogger;
 import oracle.iam.platform.OIMClient;
 import oracle.iam.reconciliation.api.EventAttributes;
 import oracle.iam.reconciliation.api.ChangeType;
+import oracle.iam.reconciliation.api.EventMgmtService;
 import oracle.iam.reconciliation.api.ReconOperationsService;
+import oracle.iam.reconciliation.vo.EventConstants;
 
 /**
  * Example of Multi-threading
@@ -67,8 +71,10 @@ public class MultithreadTestDriver
             
             // Login to OIM with System Administrator Credentials
             oimClient.login(OIM_ADMIN_USERNAME, OIM_ADMIN_PASSWORD.toCharArray());
-            
-            //ReconOperationsService reconOps = oimClient.getService(ReconOperationsService.class);
+      
+            // Get OIM services
+            ReconOperationsService reconOps = oimClient.getService(ReconOperationsService.class);
+            EventMgmtService eventService = oimClient.getService(EventMgmtService.class);
             
             String csvFilePath = "/home/oracle/Desktop/psft_hrms_users.csv";
             FileReader fReader = new FileReader(csvFilePath); 
@@ -95,7 +101,7 @@ public class MultithreadTestDriver
             ExecutorService threadExecutor = Executors.newFixedThreadPool(numOfThreads);
             
             // Initialize base configuration 
-            EventProcessor.initializeConfig(header, delimiter, resourceObject, evtAttr, LOGGER);
+            EventProcessor.initializeConfig(header, delimiter, resourceObject, evtAttr, LOGGER, reconOps, eventService);
             
             // Process data entries using multi-threading
             line = bReader.readLine();
@@ -135,6 +141,19 @@ public class MultithreadTestDriver
     }  
 }
 
+
+/**
+ * Each thread modifies a user
+ * @author rayechan
+ */
+class UserProcessor implements Runnable
+{
+    public void run() 
+    {
+        
+    }   
+}
+
 /**
  * Each thread will create and process a reconciliation event.
  * @author rayedchan
@@ -147,10 +166,11 @@ class EventProcessor implements Runnable
     private static ODLLogger logger;
     private static String resourceObjectName;
     private static EventAttributes evtAttr;
-            
+    private static ReconOperationsService reconOps;
+    private static EventMgmtService eventService;
+    
     // Single entry in file
     private String line;
-    private static ReconOperationsService reconOps;
     
     /**
      * Constructor
@@ -166,13 +186,15 @@ class EventProcessor implements Runnable
      * @param header    Header line of CSV file
      * @param delimiter Delimiter that separates each attribute
      */
-    public static void initializeConfig(String[] header, String delimiter, String resourceObjectName, EventAttributes evtAttr, ODLLogger logger)
+    public static void initializeConfig(String[] header, String delimiter, String resourceObjectName, EventAttributes evtAttr, ODLLogger logger, ReconOperationsService reconOps, EventMgmtService eventService)
     {
         EventProcessor.header = header;
         EventProcessor.delimiter = delimiter;
         EventProcessor.logger = logger;
         EventProcessor.resourceObjectName = resourceObjectName;
         EventProcessor.evtAttr = evtAttr;
+        EventProcessor.reconOps = reconOps;
+        EventProcessor.eventService = eventService;
     }
     
     public void run()
@@ -196,11 +218,21 @@ class EventProcessor implements Runnable
         try 
         {
             // Process Reconciliation Event
-            reconOps.processReconciliationEvent(reconKey);
+            // Using this API with threading may cause the following exception which results in a reconciliation event to be stuck in "Single User Matched" status: 
+            // Thor.API.Exceptions.tcAPIException: An exception occurred: oracle.iam.platform.utils.SuperRuntimeException: Exception [EclipseLink-5006] (Eclipse Persistence Services - 2.3.1.v20111018-r10243): org.eclipse.persistence.exceptions.OptimisticLockException
+            // Exception Description: The object [oracle.iam.reconciliation.dao.event.ReconBatch@3aa4c94] cannot be updated because it has changed or been deleted since it was las
+            //reconOps.processReconciliationEvent(reconKey);
+            
+            String actionName = EventConstants.RECON_EVENT_ACTION_REEVAL; // Re-evalute
+            HashMap<Object,Object> actionParams = new HashMap<Object,Object>();
+            List<Long> reconEventIds = new ArrayList<Long>();
+            reconEventIds.add(reconKey);
+            String actionPerformed = "Process Recon Event: " + reconKey;
+            eventService.performBulkAction(actionName, actionParams, reconEventIds, actionPerformed);
             logger.log(ODLLevel.NOTIFICATION, "Processed reconciliation event {0}", new Object[]{reconKey});
         } 
         
-        catch (tcAPIException ex) 
+        catch (Exception ex) 
         {
             logger.log(ODLLevel.SEVERE, MessageFormat.format("Failed to process reconciliation event {0}", new Object[]{reconKey}), ex);
         }
