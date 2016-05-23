@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scheduledTasks xmlns="http://xmlns.oracle.com/oim/scheduler">
+    <task>
+        <name>Flat File User Modification</name>
+        <class>com.blogspot.oraclestack.scheduledtasks.FlatFileUserModification</class>
+        <description>Modifies OIM users using data given in a CSV file</description>
+        <retry>5</retry>
+        <parameters>
+             <string-param required="true" encrypted="false" helpText="Key Attribute Name to identify OIM User">Key Attribute Name</string-param>
+             <string-param required="true" encrypted="false" helpText="Absolute File Path">File Path</string-param>
+             <string-param required="true" encrypted="false" helpText="Delimiter">Delimiter</string-param>
+             <number-param required="true" encrypted="false" helpText="Number of Threads">Number of Threads</number-param>
+        </parameters>
+    </task>
+</scheduledTasks>
