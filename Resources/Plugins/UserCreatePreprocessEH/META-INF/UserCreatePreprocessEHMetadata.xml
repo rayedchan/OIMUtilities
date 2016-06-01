@@ -2,9 +2,9 @@
 <eventhandlers xmlns="http://www.oracle.com/schema/oim/platform/kernel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.oracle.com/schema/oim/platform/kernel orchestration-handlers.xsd"> 
   <action-handler 
      entity-type="User"
-     operation="LOCK"
-     class="com.blogspot.oraclestack.eventhandlers.UserLockPreprocessEH"
-     name="UserLockPreprocessEH"
+     operation="CREATE"
+     class="com.blogspot.oraclestack.eventhandlers.UserCreatePreprocessEH"
+     name="UserCreatePreprocessEH"
      stage="preprocess" 
      order="1050"
      sync="TRUE"/> 

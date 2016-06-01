@@ -71,9 +71,9 @@ public class CallProvisioningTaskTestDriver
             taskDefOps = oimClient.getService(TaskDefinitionOperationsIntf.class);
             
             // Change variables accordingly
-            String userLogin = "LSTILLMAN"; // OIM User Login
+            String userLogin = "KREN"; // OIM User Login
             String resourceObjectName = "LDAP User";  // Resource Object Name
-            String procTaskName = "Set Department To Some Value";
+            String procTaskName = "Disable User";
                                                 
             // Get user's details
             boolean useUserLogin = true;

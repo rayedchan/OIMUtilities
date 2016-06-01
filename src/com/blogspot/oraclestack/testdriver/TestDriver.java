@@ -16,6 +16,9 @@ import com.blogspot.oraclestack.services.OracleIdentityManagerClient;
 import com.blogspot.oraclestack.utilities.PlatformServiceUtilities;
 import com.blogspot.oraclestack.utilities.PluginRegistration;
 import com.blogspot.oraclestack.utilities.RoleUtilities;
+import java.text.MessageFormat;
+import oracle.iam.identity.usermgmt.api.UserManager;
+import oracle.iam.identity.usermgmt.api.UserManagerConstants;
 
 /**
  * Used for testing purposes.
@@ -53,8 +56,12 @@ public class TestDriver
             PlatformServiceUtilities platServUtil = new PlatformServiceUtilities(oimClient);
             // platServUtil.uploadJar(JarElementType.JavaTasks, "/home/oracle/Desktop/OIMUtilities/dist/OIMUtilities.jar");
             //platServUtil.deleteJar(JarElementType.ThirdParty, "OIMUtilities.jar");
-            platServUtil.purgeCache();
+            //platServUtil.purgeCache();
+            UserManager usrMgr = oimClient.getService(UserManager.class);
+            System.out.println(usrMgr.getDetails("DMILES", new HashSet(), true));
             
+            System.out.println(UserManagerConstants.AttributeName.PHONE_NUMBER.getId());
+            System.out.println(MessageFormat.format("Failed for {0}", new Object[]{UserManagerConstants.AttributeName.TITLE.getId()}));
             // Test Role service utilities
             //RoleUtilities roleUtils = new RoleUtilities(oimClient);
             //System.out.println(roleUtils.getAllRoleCategories());
@@ -70,9 +77,9 @@ public class TestDriver
             //roleUtils.revokeRoleFromUser("engr", "49");
             
             // Plugin Registation
-            String pluginZip = "/home/oracle/Github/OIMUtilities/Resources/Plugins/FetchCredentialStoreST/FetchCredentialStoreST.zip";
+            String pluginZip = "/home/oracle/GitHub/OIMUtilities/Resources/Plugins/FlatFileUserModificationST/FlatFileUserModificationST.zip";
             PluginRegistration pluginReg = new PluginRegistration(oimClient);
-            //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.ConditionalEventHandlerPostProcess", "1.0");
+            //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.UserCreatePreprocessEH", "1.0");
             pluginReg.registerOIMPlugin(pluginZip);
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.TelephoneNumberValidationEH", "1.0");
             //pluginReg.unRegisterOIMPlugin("com.blogspot.oraclestack.eventhandlers.SetMiddleNamePreprocessEH", "1.0");

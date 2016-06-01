@@ -1,5 +1,5 @@
 <oimplugins xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <plugins pluginpoint="oracle.iam.platform.kernel.spi.EventHandler">
-      <plugin pluginclass="com.blogspot.oraclestack.eventhandlers.UserLockPreprocessEH" version="1.0" name="UserLockPreprocessEH"/>  
+      <plugin pluginclass="com.blogspot.oraclestack.eventhandlers.UserCreatePreprocessEH" version="1.0" name="UserCreatePreprocessEH"/>  
    </plugins>         
 </oimplugins>

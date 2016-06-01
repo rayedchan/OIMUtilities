@@ -1,7 +1,11 @@
 package com.blogspot.oraclestack.testdriver;
 
 import Thor.API.Exceptions.tcAPIException;
+import Thor.API.Exceptions.tcAwaitingApprovalDataCompletionException;
+import Thor.API.Exceptions.tcAwaitingObjectDataCompletionException;
 import Thor.API.Exceptions.tcBulkException;
+import Thor.API.Exceptions.tcColumnNotFoundException;
+import Thor.API.Exceptions.tcStaleDataUpdateException;
 import Thor.API.Exceptions.tcTaskNotFoundException;
 import Thor.API.Operations.tcProvisioningOperationsIntf;
 import Thor.API.Security.XLClientSecurityAssociation;
@@ -12,10 +16,12 @@ import com.thortech.xl.dataaccess.tcDataSetException;
 import com.thortech.xl.dataobj.PreparedStatementUtil;
 import com.thortech.xl.orb.dataaccess.tcDataAccessException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Hashtable;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.core.ojdl.logging.ODLLogger;
 import oracle.iam.platform.OIMClient;
+import Thor.API.tcResultSet;
 
 /**
  * Test Driver to manual complete provisioning tasks.
@@ -92,7 +98,7 @@ public class ManualCompleteProvisioningTaskTestDriver
      * @throws tcBulkException
      * @throws tcAPIException
      */
-   public static void manualCompleteProvisioningTasks(String processDefinitionName, String processTaskName, OIMClient oimClient) throws tcDataSetException, tcDataAccessException, tcTaskNotFoundException, tcBulkException, tcAPIException
+   public static void manualCompleteProvisioningTasks(String processDefinitionName, String processTaskName, OIMClient oimClient) throws tcDataSetException, tcDataAccessException, tcTaskNotFoundException, tcBulkException, tcAPIException, tcColumnNotFoundException, tcAwaitingObjectDataCompletionException, tcAwaitingApprovalDataCompletionException, tcStaleDataUpdateException
    {
        tcProvisioningOperationsIntf provOps = null;
        
@@ -106,7 +112,7 @@ public class ManualCompleteProvisioningTaskTestDriver
            tcDataProvider dbProvider = new tcDataBaseClient();
            
            // Setup query to fetch 'Rejected', 'Pending', and 'Uncompleted' provisioning tasks for a given process task and process definition
-           String query = "select sch.sch_key from sch inner join osi on sch.sch_key = osi.sch_key inner join mil on osi.mil_key = mil.mil_key inner join pkg on pkg.pkg_key = osi.pkg_key where pkg.pkg_name = ? and mil.mil_name = ? and sch_status in ('R', 'P', 'UC') order by sch.sch_key";
+           String query = "select sch.sch_key from sch inner join osi on sch.sch_key = osi.sch_key inner join mil on osi.mil_key = mil.mil_key inner join pkg on pkg.pkg_key = osi.pkg_key where pkg.pkg_name = ? and mil.mil_name = ?  and sch_status in ('R', 'P', 'UC') order by sch.sch_key";
            PreparedStatementUtil ps = new PreparedStatementUtil();
            ps.setStatement(dbProvider, query);
            ps.setString(1, processDefinitionName); // PKG_NAME
@@ -127,10 +133,19 @@ public class ManualCompleteProvisioningTaskTestDriver
                Long id = tasksDataSet.getLong("sch_key"); // Get key from record
                schKeys[i] = id; // Add to array
                LOGGER.log(ODLLevel.NOTIFICATION, "Provisioning Task ID: {0}", new Object[]{id});
+               
+               tcResultSet rs = provOps.getProvisioningTaskDetails(id);
+               printTcResultSetRecords(rs);
+             
+               byte[] taskInstanceRowVer = rs.getByteArrayValue("Process Instance.Task Details.Row Version");
+               HashMap<String,Object> phAttributeList = new HashMap<String,Object>();
+               phAttributeList.put("Process Instance.Task Details.Status", "Success");
+               provOps.updateTask(id, taskInstanceRowVer, phAttributeList);
+               break;
            }
            
            LOGGER.log(ODLLevel.NOTIFICATION, "Provisioning Tasks to Complete: {0}", new Object[]{Arrays.toString(schKeys)});
-           provOps.setTasksCompletedManually(schKeys); // Bulk Manual Complete provisioning tasks
+           //provOps.setTasksCompletedManually(schKeys); // Bulk Manual Complete provisioning tasks
        }
        
        finally 
@@ -145,4 +160,46 @@ public class ManualCompleteProvisioningTaskTestDriver
            XLClientSecurityAssociation.clearThreadLoginSession();
        }
    }
+   
+    /**
+     * Prints the records of a tcResultSet.
+     * @param   tcResultSetObj  tcResultSetObject
+     */
+    public static void printTcResultSetRecords(tcResultSet tcResultSetObj) throws tcAPIException, tcColumnNotFoundException
+    {
+        String[] columnNames = tcResultSetObj.getColumnNames();
+        int numRows = tcResultSetObj.getTotalRowCount();
+        
+        for(int i = 0; i < numRows; i++)
+        {
+            tcResultSetObj.goToRow(i);
+            for(String columnName: columnNames)
+            {
+                System.out.println(columnName + " = " + tcResultSetObj.getStringValue(columnName));
+            }
+            System.out.println();
+        }
+    }
+    
+    /**
+     * Converts tcResultSet to a Map.
+     * @param   tcResultSetObj  tcResultSetObject
+     */
+    public static HashMap<String,String> covertTcResultSetToMap(tcResultSet tcResultSetObj) throws tcAPIException, tcColumnNotFoundException
+    {
+        String[] columnNames = tcResultSetObj.getColumnNames();
+        int numRows = tcResultSetObj.getTotalRowCount();
+        HashMap<String,String> map = new HashMap<String,String>();
+        
+        for(int i = 0; i < numRows; i++)
+        {
+            tcResultSetObj.goToRow(i);
+            for(String columnName: columnNames)
+            {
+                map.put(columnName, tcResultSetObj.getStringValue(columnName));
+            }
+        }
+        
+        return map;
+    }
 }

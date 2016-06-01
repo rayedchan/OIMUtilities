@@ -1,7 +1,10 @@
 package com.blogspot.oraclestack.testdriver;
 
+import Thor.API.Operations.tcReconciliationOperationsIntf;
 import com.blogspot.oraclestack.utilities.ReconciliationEvents;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Hashtable;
 import oracle.iam.platform.OIMClient;
@@ -29,6 +32,7 @@ public class ReconciliationEventsTestDriver
     public static void main(String[] args) throws Exception
     {
         OIMClient oimClient = null;
+        tcReconciliationOperationsIntf reconOps = null;
         
         try
         {
@@ -63,24 +67,25 @@ public class ReconciliationEventsTestDriver
             HashMap<String,Object> childTableGroupData2 = new HashMap<String, Object>();
             
             // DBAT Target
-            reconData.put("Unique Id", "DDUMA"); // __UID__ attribute
-            reconData.put("User Id", "DDUMA"); // __NAME__ attribute
-            reconData.put("Status", "Enabled"); // __ENABLE__
-            reconData.put("IT Resource Name", INPUT_IT_RESOURCE);
-            reconData.put("Middle Name", "B"); 
+            //reconData.put("Unique Id", "DDUMA"); // __UID__ attribute
+            //reconData.put("User Login", "DDUMA"); // __NAME__ attribute
+            //reconData.put("User Id", "DDUMA"); // __NAME__ attribute
+            //reconData.put("Status", "Disabled"); // __ENABLE__
+            //reconData.put("IT Resource Name", INPUT_IT_RESOURCE);
+            //reconData.put("Middle Name", "B"); 
             
-            childTableRoleData1.put("Role", "Engineer");
-            childTableRoleData2.put("Role", "Developer");
-            childRoleEntries.add(childTableRoleData1);
-            childRoleEntries.add(childTableRoleData2);
+            //childTableRoleData1.put("Role", "Engineer");
+            //childTableRoleData2.put("Role", "Developer");
+            //childRoleEntries.add(childTableRoleData1);
+            //childRoleEntries.add(childTableRoleData2);
             
-            childTableGroupData1.put("Group Name", "Fresh");
-            childTableGroupData2.put("Group Name", "Rubix");
-            childGroupEntries.add(childTableGroupData1);
-            childGroupEntries.add(childTableGroupData2);
+            //childTableGroupData1.put("Group Name", "Fresh");
+            //childTableGroupData2.put("Group Name", "Rubix");
+            //childGroupEntries.add(childTableGroupData1);
+            //childGroupEntries.add(childTableGroupData2);
             
-            childReconData.put("RO", childRoleEntries);
-            childReconData.put("GRP", childGroupEntries);
+            //childReconData.put("RO", childRoleEntries);
+            //childReconData.put("GRP", childGroupEntries);
             
             // AD Trusted; No IT Resource needed
             /*reconData.put("objectGUID", "NTAYLOR"); // __UID__ attribute
@@ -93,14 +98,41 @@ public class ReconciliationEventsTestDriver
             reconData.put("First Name", "Nick");*/
             
             // Create a reconciliation event and process it
-            //reconEvtUtil.makeReconciliationEvent(INPUT_RESOURCE_OBJECT, reconData);
+            // reconEvtUtil.makeReconciliationEvent(INPUT_RESOURCE_OBJECT, reconData);
             
             // Create a reconciliation event and process it
-            reconEvtUtil.makeReconciliationEventWithChildData(INPUT_RESOURCE_OBJECT, reconData, childReconData);
+            // reconEvtUtil.makeReconciliationEventWithChildData(INPUT_RESOURCE_OBJECT, reconData, childReconData);
+            
+            reconOps = oimClient.getService(tcReconciliationOperationsIntf.class);
+            String resourceObjectName = "Peoplesoft HRMS";
+            reconData.put("User Id", "KREN");
+            reconData.put("Status", "Disabled");
+            boolean finishEvent = true; // Mark true if no child data is providied
+            long reconEventKey = reconOps.createReconciliationEvent(resourceObjectName, reconData, finishEvent); // Creates a reconciliation event in "Event Recieved" by default; "Data Recieved" if recon event is marked finished
+            
+            // Calculate Effective Date with current time + 20 minutes
+            Calendar c = Calendar.getInstance();
+            c.setTime(new java.util.Date());
+            c.add(Calendar.SECOND, 30); // Add mins to current date
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss"); // Format Date
+            String sqlDateStr = sdf.format(c.getTime()); // Convert java date
+            java.sql.Date sqlDate = new java.sql.Date(c.getTimeInMillis());
+            String dateFormat = "yyyy-MM-dd";
+            //long reconEventKey = reconOps.createReconciliationEvent(resourceObjectName, reconData, finishEvent, dateFormat, sqlDate);
+            System.out.println(reconEventKey);
+            
+            //reconOps.processReconciliationEvent(reconEventKey);
+            
+            
         }
         
         finally
         {
+            if(reconOps != null)
+            {
+                reconOps.close();
+            }
+            
             if( oimClient != null)
             {
                 oimClient.logout();

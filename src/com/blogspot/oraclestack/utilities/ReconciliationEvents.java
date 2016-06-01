@@ -51,7 +51,7 @@ public class ReconciliationEvents
         EventAttributes evtAttrs = new EventAttributes();
         evtAttrs.setEventFinished(true); // Child is not going to be provided; Event will be in "Data Recieved" state
         evtAttrs.setActionDate(null); // Processing is done instantly; no defering date
-        evtAttrs.setChangeType(ChangeType.REGULAR); // For create and modify operations
+        evtAttrs.setChangeType(ChangeType.CHANGELOG); // For create and modify operations
         
         // Determine if event needs to be ignored (E.g. No change)
         boolean ignoreEvent = this.reconOps.ignoreEvent(resourceObjName, reconFieldData);
@@ -64,8 +64,8 @@ public class ReconciliationEvents
             logger.log(ODLLevel.NOTIFICATION, "Reconciliation Event Key = [{0}]", new Object[]{reconEventKey});
         
             // Call OIM API to process reconciliation event (apply action and matching rules, and link to appropriate user, org, or process instance)
-            this.reconOps.processReconciliationEvent(reconEventKey);
-            logger.log(ODLLevel.NOTIFICATION, "Processed Recon Event.");
+            //this.reconOps.processReconciliationEvent(reconEventKey);
+            //logger.log(ODLLevel.NOTIFICATION, "Processed Recon Event.");
         }
                 
         // Close Event

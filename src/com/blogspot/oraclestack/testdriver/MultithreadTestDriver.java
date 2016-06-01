@@ -1,6 +1,7 @@
 package com.blogspot.oraclestack.testdriver;
 
 import Thor.API.Exceptions.tcAPIException;
+import com.blogspot.oraclestack.objects.UserProcessor;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.text.MessageFormat;
@@ -16,7 +17,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.core.ojdl.logging.ODLLogger;
+import oracle.iam.identity.exception.NoSuchUserException;
+import oracle.iam.identity.exception.SearchKeyNotUniqueException;
+import oracle.iam.identity.exception.UserModifyException;
+import oracle.iam.identity.exception.ValidationFailedException;
+import oracle.iam.identity.usermgmt.api.UserManager;
+import oracle.iam.identity.usermgmt.vo.User;
 import oracle.iam.platform.OIMClient;
+import oracle.iam.platform.authz.exception.AccessDeniedException;
 import oracle.iam.reconciliation.api.EventAttributes;
 import oracle.iam.reconciliation.api.ChangeType;
 import oracle.iam.reconciliation.api.EventMgmtService;
@@ -75,8 +83,61 @@ public class MultithreadTestDriver
             // Get OIM services
             ReconOperationsService reconOps = oimClient.getService(ReconOperationsService.class);
             EventMgmtService eventService = oimClient.getService(EventMgmtService.class);
+            UserManager usrMgr = oimClient.getService(UserManager.class);
             
-            String csvFilePath = "/home/oracle/Desktop/psft_hrms_users.csv";
+            //User user = usrMgr.getDetails("AWINDRUNNER", null, true);
+            //System.out.println(user);
+            
+            //String keyAttrName = "usr_key";
+            //User modUser = new User("");
+            //modUser.setAttribute("Employee Number", "1234");
+            //usrMgr.modify(keyAttrName, "3018", modUser);
+            
+            //String keyAttrName = "User Login";
+            //User modUser = new User("");
+            //modUser.setAttribute("Employee Number", null);
+            //usrMgr.modify(keyAttrName, "AWINDRUNNER", modUser);
+            
+            String keyAttrName = "User Login";
+            String filePath = "/home/oracle/Desktop/users.csv";
+            FileReader fReader = new FileReader(filePath);
+            bReader = new BufferedReader(fReader);
+            String delimiter = ",";
+            
+            // Header Line
+            String line = bReader.readLine();
+            if(line == null || "".equalsIgnoreCase(line))
+            {
+                throw new Exception("Header must be provided as the first entry in file.");
+            }
+            String[] header = line.split(delimiter);
+            System.out.println(Arrays.asList(header));
+            
+             // Create thread pool      
+            int numOfThreads = 3;
+            ExecutorService threadExecutor = Executors.newFixedThreadPool(numOfThreads);
+            
+            // Initialize base configuration 
+            UserProcessor.initializeConfig(header, delimiter, LOGGER, usrMgr, keyAttrName);
+            
+            // Process data entries using multi-threading
+            line = bReader.readLine();
+            while(line != null)
+            {          
+                threadExecutor.execute(new UserProcessor(line));
+                line = bReader.readLine();
+            }
+            
+             // Initate thread shutdown
+            threadExecutor.shutdown();
+            
+            while(!threadExecutor.isTerminated())
+            {
+                // Wait for all event processor threads to complete
+            }
+            
+            
+            /*String csvFilePath = "/home/oracle/Desktop/psft_hrms_users.csv";
             FileReader fReader = new FileReader(csvFilePath); 
             bReader = new BufferedReader(fReader);
             String delimiter = ",";
@@ -117,7 +178,7 @@ public class MultithreadTestDriver
             while(!threadExecutor.isTerminated())
             {
                 // Wait for all event processor threads to complete
-            }
+            }*/
         }
         
         catch(Exception ex)
@@ -139,19 +200,6 @@ public class MultithreadTestDriver
             }
         } 
     }  
-}
-
-
-/**
- * Each thread modifies a user
- * @author rayechan
- */
-class UserProcessor implements Runnable
-{
-    public void run() 
-    {
-        
-    }   
 }
 
 /**
