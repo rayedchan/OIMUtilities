@@ -22,7 +22,7 @@ import oracle.iam.reconciliation.api.ReconOperationsService;
 public class FlatFileUserModificationTestDriver 
 {
     // Logger
-    private static final ODLLogger LOGGER = ODLLogger.getODLLogger(MultithreadTestDriver.class.getName());
+    private static final ODLLogger LOGGER = ODLLogger.getODLLogger(FlatFileUserModificationTestDriver.class.getName());
     
     // Adjust constant variables according to you OIM environment
     public static final String OIM_HOSTNAME = "localhost";
