@@ -1,45 +1,32 @@
 package com.blogspot.oraclestack.testdriver;
 
-import com.blogspot.oraclestack.objects.UserProcessor;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Properties;
 import oracle.core.ojdl.logging.ODLLevel;
 import oracle.core.ojdl.logging.ODLLogger;
-import oracle.iam.identity.exception.NoSuchUserException;
-import oracle.iam.identity.exception.SearchKeyNotUniqueException;
-import oracle.iam.identity.exception.UserModifyException;
-import oracle.iam.identity.exception.ValidationFailedException;
-import oracle.iam.identity.usermgmt.api.UserManager;
-import oracle.iam.identity.usermgmt.vo.User;
 import oracle.iam.platform.OIMClient;
-import oracle.iam.platform.authz.exception.AccessDeniedException;
 import oracle.iam.reconciliation.api.BatchAttributes;
-import oracle.iam.reconciliation.api.EventAttributes;
 import oracle.iam.reconciliation.api.ChangeType;
 import oracle.iam.reconciliation.api.EventMgmtService;
 import oracle.iam.reconciliation.api.InputData;
 import oracle.iam.reconciliation.api.ReconOperationsService;
 import oracle.iam.reconciliation.api.ReconciliationResult;
-import oracle.iam.reconciliation.vo.EventConstants;
 
 /**
  * Generic Resource Reconciliation Event Creator
@@ -47,10 +34,10 @@ import oracle.iam.reconciliation.vo.EventConstants;
  * Any resource can be used as long as the resource object and fields are correctly specified.
  * @author rayedchan
  */
-public class GenericReconEventFlatFileFeedTestDriver 
+public class GenericReconEventSourceGeneratorDriver 
 {
     // Logger
-    private static final ODLLogger LOGGER = ODLLogger.getODLLogger(GenericReconEventFlatFileFeedTestDriver.class.getName());
+    private static final ODLLogger LOGGER = ODLLogger.getODLLogger(GenericReconEventSourceGeneratorDriver.class.getName());
     
     // Adjust constant variables according to you OIM environment
     public static final String OIM_HOSTNAME = "localhost";
@@ -70,7 +57,7 @@ public class GenericReconEventFlatFileFeedTestDriver
     public static void main(String[] args) throws Exception
     {
         OIMClient oimClient = null;
-         Connection conn = null;
+        Connection conn = null;
           
         try
         {
@@ -94,10 +81,20 @@ public class GenericReconEventFlatFileFeedTestDriver
             ReconOperationsService reconOps = oimClient.getService(ReconOperationsService.class);
             EventMgmtService eventService = oimClient.getService(EventMgmtService.class);
             
-            String profileName = "";
-            String dataSource = "";
-            String tableName = "";
-            String filter = "";
+            // TODO: Input parameters
+            String profileName = "AD User Trusted"; // Resource Object Name
+            String tableName = "MY_ADUSER_RE_FEED"; // Target Table
+            String filter = ""; // WHERE Clause
+            
+            // Get database connection via Driver Manager
+            conn = null;
+            Class.forName("oracle.jdbc.driver.OracleDriver"); // Load Oracle database driver class
+            String dbUrl = "jdbc:oracle:thin:@localhost:1521/orcl"; // Oracle Database URL
+            Properties connectionProp = new Properties();
+            connectionProp.put("user", "DEV_OIM");
+            connectionProp.put("password", "Password1");
+            conn = DriverManager.getConnection(dbUrl, connectionProp);
+            LOGGER.log(ODLLevel.NOTIFICATION, "Established database connection.");
             
             // Recon Event Details
             Boolean eventFinished = true; // No child data provided; mark event to Data Received
@@ -105,10 +102,6 @@ public class GenericReconEventFlatFileFeedTestDriver
             Date actionDate = null; // Event to be processed immediately
             boolean ignoreDuplicate = false; // Identical to using IgnoreEvent API
             BatchAttributes batchAttrs = new BatchAttributes(profileName, dateFormat, ignoreDuplicate);
-            
-            // Get database connection from data source
-            conn = null;
-            LOGGER.log(ODLLevel.NOTIFICATION, "Retrieved connection for datasource: {0}" , new Object[]{dataSource});
             
             // Construct list of reconciliation event to be created reading from source database table
             List<InputData> allReconEvents = constructReconciliationEventList(conn, tableName, filter, eventFinished, actionDate);
@@ -120,9 +113,7 @@ public class GenericReconEventFlatFileFeedTestDriver
             ReconciliationResult result = reconOps.createReconciliationEvents(batchAttrs, events);
             LOGGER.log(ODLLevel.NOTIFICATION, "Success result: {0}",  new Object[]{result.getSuccessResult()});
             LOGGER.log(ODLLevel.NOTIFICATION, "Success result: {0}",  new Object[]{result.getFailedResult()});
-            
-            
-            
+
             
   /*         
    InputData[] input = new InputData[2];
