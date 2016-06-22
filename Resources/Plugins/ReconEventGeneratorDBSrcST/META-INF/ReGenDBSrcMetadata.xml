@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scheduledTasks xmlns="http://xmlns.oracle.com/oim/scheduler">
+    <task>
+        <name>Recon Event Generator Database Source</name>
+        <class>com.blogspot.oraclestack.scheduledtasks.ReconEventsGeneratorDatabaseSource</class>
+        <description>Creates reconciliation events using data from a database</description>
+        <retry>5</retry>
+        <parameters>
+             <string-param required="true" encrypted="false" helpText="JNDI of WebLogic Datasource">Data Source</string-param>
+             <string-param required="true" encrypted="false" helpText="Name of Reconciliation Profile">Resource Object Name</string-param>
+             <string-param required="true" encrypted="false" helpText="Target Table Name">Table Name</string-param>
+             <string-param required="true" encrypted="false" helpText="Date Format">Date Format</string-param>
+             <number-param required="false" encrypted="false" helpText="Filter">Filter</number-param>
+             <boolean-param required="true" encrypted="false" helpText="True to only create recon event when a delta is detected">Ignore Duplicate Event</boolean-param>
+             <string-param required="false" encrypted="false" helpText=" Correlates target field to recon field ">Mapping Lookup</string-param>
+        </parameters>
+    </task>
+</scheduledTasks>

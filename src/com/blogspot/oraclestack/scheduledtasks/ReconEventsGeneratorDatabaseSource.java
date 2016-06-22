@@ -31,7 +31,10 @@ import oracle.iam.scheduler.vo.TaskSupport;
  * trusted or target resource object can be used as long as the required fields are provided. 
  * @author rayedchan
  * 
+ * Additional features:
+ * TODO: Attribute Mapping Translation
  * TODO: Child Data 
+ * TODO: Put batching
  */
 public class ReconEventsGeneratorDatabaseSource extends TaskSupport
 {
@@ -59,7 +62,8 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
             String filter = (String) params.get("Filter") == null ? "" : (String) params.get("Filter"); // WHERE clause filter
             String dateFormat = (String) params.get("Date Format") == null ? DEFAULT_DATE_FORMAT : (String) params.get("Date Format"); // Date Format for reconciliation event E.g. "yyyy-MM-dd"
             Boolean ignoreDuplicateEvent = (Boolean) params.get("Ignore Duplicate Event"); // Identical to using IgnoreEvent API; if true, reconciliation event won't be created if there is nothing to update
-                        
+            String attrMappings = (String) params.get("Mapping Lookup"); // Correlates target field to recon field 
+            
             // Reconciliation events details
             Boolean eventFinished = true; // No child data provided; mark event to Data Received
             Date actionDate = null; // Event to be processed immediately for null. If a date is specified, defer reconciliation event.
