@@ -12,7 +12,8 @@
              <string-param required="true" encrypted="false" helpText="Date Format">Date Format</string-param>
              <number-param required="false" encrypted="false" helpText="Filter">Filter</number-param>
              <boolean-param required="true" encrypted="false" helpText="True to only create recon event when a delta is detected">Ignore Duplicate Event</boolean-param>
-             <string-param required="false" encrypted="false" helpText=" Correlates target field to recon field ">Mapping Lookup</string-param>
+             <string-param required="false" encrypted="false" helpText="Correlates target field to recon field">Mapping Lookup</string-param>
+             <string-param required="false" encrypted="false" helpText="Required for target; Empty for trusted">IT Resource Name</string-param>
         </parameters>
     </task>
 </scheduledTasks>
