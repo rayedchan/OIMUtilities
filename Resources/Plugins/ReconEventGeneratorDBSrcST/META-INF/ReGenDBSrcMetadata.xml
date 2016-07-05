@@ -14,6 +14,7 @@
              <boolean-param required="true" encrypted="false" helpText="True to only create recon event when a delta is detected">Ignore Duplicate Event</boolean-param>
              <string-param required="false" encrypted="false" helpText="Correlates target field to recon field">Mapping Lookup</string-param>
              <string-param required="false" encrypted="false" helpText="Required for target; Empty for trusted">IT Resource Name</string-param>
+             <string-param required="false" encrypted="false" helpText="Column used to relate parent and child table">Link Column Name</string-param>
         </parameters>
     </task>
 </scheduledTasks>
