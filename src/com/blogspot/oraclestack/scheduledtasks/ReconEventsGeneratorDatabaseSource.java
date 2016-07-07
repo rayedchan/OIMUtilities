@@ -18,8 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -108,7 +106,7 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
             // Create reconciliation events in OIM and process them
             ReconciliationResult result = reconOps.createReconciliationEvents(batchAttrs, events);
             LOGGER.log(ODLLevel.NOTIFICATION, "Success result: {0}",  new Object[]{result.getSuccessResult()});
-            LOGGER.log(ODLLevel.NOTIFICATION, "Success result: {0}",  new Object[]{result.getFailedResult()});
+            LOGGER.log(ODLLevel.NOTIFICATION, "Failed result: {0}",  new Object[]{result.getFailedResult()});
         } 
         
         catch (tcAPIException e) 
@@ -216,7 +214,7 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
                 }
                 
                 // Remove child info from Recon Attr Map
-                reconAttrMap.remove(key);
+                it.remove();
             }
         }
     }
@@ -255,6 +253,7 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
     public List<InputData> constructReconciliationEventList(Connection conn, String tableName, String filter, Boolean eventFinished, Date actionDate, HashMap<String,String> reconAttrMap, String itResName, HashMap<String,String> childTableMappings, HashMap<String,HashMap<String,String>> childColumnMappings, String linkColumnName) throws SQLException
     {
         List<InputData> allReconEvents = new ArrayList<InputData>();
+        String linkColumnValue = null;
         
         // SELECT SQL Query on source table
         String usersQuery = "SELECT * FROM " + tableName + (filter == null || "".equals(filter) ? "" : " " + filter);
@@ -295,12 +294,20 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
                     {
                         String value = rs.getString(targetColumnName); // Get column value
                         reconEventData.put(reconFieldName, value);
+                        
+                        // Get key value for relating parent and child tables 
+                        if(linkColumnName != null && linkColumnName.equals(targetColumnName))
+                        {
+                            linkColumnValue = value;
+                            LOGGER.log(ODLLevel.INFO, "Key attribute {0} : {1}", new Object[]{linkColumnName, linkColumnValue});
+                        }
                     }
                 }
             }
             
             // Target columns are identical to reconciliation field names
             // No Child data supported for this optional
+            // TODO: Remove this
             else
             {
                 // Iterate each column and populate map accordingly
@@ -311,9 +318,11 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
                     reconEventData.put(reconFieldName, value);
                 }
             }
-
+            
+            Map<String,List<Map<String,Serializable>>> userChildEventData = fetchUserEntitlements(conn, childTableMappings, childColumnMappings, linkColumnName, linkColumnValue);
             LOGGER.log(ODLLevel.NOTIFICATION, "Recon Event Data: {0}", new Object[]{reconEventData});
-            InputData event = new InputData(reconEventData, null, eventFinished, ChangeType.CHANGELOG, actionDate);
+            LOGGER.log(ODLLevel.NOTIFICATION, "Child Recon Event Data: {0}", new Object[]{userChildEventData});
+            InputData event = new InputData(reconEventData, userChildEventData, eventFinished, ChangeType.CHANGELOG, actionDate);
 
             // Add recon event to list
             allReconEvents.add(event);
@@ -322,43 +331,59 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
         return allReconEvents;
     }
     
-    private HashMap<String,ArrayList<HashMap<String,Object>>> fetchUserEntitlements(Connection conn, HashMap<String,String> childTableMappings, HashMap<String,HashMap<String,String>> childColumnMappings, String linkColumnName, String linkColumnValue) throws SQLException
+    /**
+     * Fetch all entitlements for a single user
+     * @param conn  Database connection
+     * @param childTableMappings    Contains all child table to inspect
+     * @param childColumnMappings   Contains all child columns to inspect
+     * @param linkColumnName        Name of key attribute 
+     * @param linkColumnValue       Key value to get user's child records  
+     * @return Object containing user's entitlements and use to feed to OIM API
+     * @throws SQLException 
+     */
+    private Map<String,List<Map<String,Serializable>>> fetchUserEntitlements(Connection conn, HashMap<String,String> childTableMappings, HashMap<String,HashMap<String,String>> childColumnMappings, String linkColumnName, String linkColumnValue) throws SQLException
     { 
-        HashMap<String,ArrayList<HashMap<String,Object>>> childReconData = new HashMap<String,ArrayList<HashMap<String,Object>>>(); // {Key = Child Recon Field Map Name, Value = {Key = Child Recon Field Name, Value = data}} 
-         
-        // Iterate each child table
-        for(Map.Entry<String,String> entry : childTableMappings.entrySet())
+        Map<String,List<Map<String,Serializable>>> childReconData = new HashMap<String,List<Map<String,Serializable>>>(); // {Key = Child Recon Field Map Name, Value = {Key = Child Recon Field Name, Value = data}} 
+        
+        // Only inspect child data if necessary information are provided
+        if(linkColumnName != null && !"".equals(linkColumnName) && linkColumnValue != null && !"".equals(linkColumnValue))
         {
-            String rfMapName = entry.getKey();
-            String childTableName = entry.getValue();
-            
-            // Fetch user entitlement records from child table
-            String userEntQuery = "SELECT * FROM " + childTableName + " WHERE " + linkColumnName + " = ?";
-            PreparedStatement ps = conn.prepareStatement(userEntQuery);
-            ps.setString(1, linkColumnValue);
-            
-            ResultSet rs = ps.executeQuery();
-            ArrayList<HashMap<String,Object>> childEntries = new ArrayList<HashMap<String,Object>>();
-            
-            // iterate result set
-            while(rs.next())
+            // Iterate each child table
+            for(Map.Entry<String,String> entry : childTableMappings.entrySet())
             {
-                HashMap<String,String> columnMap = childColumnMappings.get(rfMapName);
-                HashMap<String,Object> childRecordData = new HashMap<String, Object>();
-                
-                for(Map.Entry<String,String> cEntry : columnMap.entrySet())
+                String rfMapName = entry.getKey();
+                String childTableName = entry.getValue();
+
+                // Fetch user entitlement records from child table
+                String userEntQuery = "SELECT * FROM " + childTableName + " WHERE " + linkColumnName + " = ?";
+                PreparedStatement ps = conn.prepareStatement(userEntQuery);
+                ps.setString(1, linkColumnValue);
+                ResultSet rs = ps.executeQuery();
+
+                // List containing all user's entitlements on one child table 
+                List<Map<String,Serializable>> childEntries = new ArrayList<Map<String,Serializable>>();
+
+                // Iterate result set (Number of entitlements a user has)
+                while(rs.next())
                 {
-                    String rfName = cEntry.getKey();
-                    String columnName = cEntry.getValue();
-                    
-                    String columnValue = rs.getString(columnName);
-                    childRecordData.put(rfName, columnValue); // Populate child recon field with corresponding target column
+                    HashMap<String,String> columnMap = childColumnMappings.get(rfMapName);
+                    Map<String,Serializable> childRecordData = new HashMap<String, Serializable>();
+
+                    // Get child record data
+                    for(Map.Entry<String,String> cEntry : columnMap.entrySet())
+                    {
+                        String rfName = cEntry.getKey(); // recon field name
+                        String columnName = cEntry.getValue(); // column name
+
+                        String columnValue = rs.getString(columnName); // get column value
+                        childRecordData.put(rfName, columnValue); // Populate child recon field with corresponding target column
+                    }
+
+                    childEntries.add(childRecordData); // add child record to list  
                 }
-                
-                childEntries.add(childRecordData);   
+
+                childReconData.put(rfMapName, childEntries); // add child table name and user's entitlements
             }
-            
-            childReconData.put(rfMapName, childEntries);
         }
         
         return childReconData;

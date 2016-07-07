@@ -131,6 +131,7 @@ public class GenericReconEventSourceGeneratorDriver
    multiValRecord2.put("Group Name", "mygroup2"); 
    allMultiValRecords.add(multiValRecord2); 
    input[0] = new InputData(reconData1, allMultiValAttribMap, true, ChangeType.CHANGELOG, null); 
+   
    HashMap<String, Serializable> reconData2 = new HashMap<String, Serializable>(); 
    reconData2.put("First Name", "name2"); List> allMultiValRecords = new ArrayList>(); 
    Map<String, List>> allMultiValAttribMap = new HashMap<String, List>>(); 
@@ -138,7 +139,17 @@ public class GenericReconEventSourceGeneratorDriver
    HashMap<String, Serializable> multiValRecord1 = new HashMap<String, Serializable>(); 
    multiValRecord1.put("Group Name", "mygroup3"); 
    allMultiValRecords.add(multiValRecord1);
-   HashMap<String, Serializable> multiValRecord2 = new HashMap<String, Serializable>(); multiValRecord2.put("Group Name", "mygroup2"); allMultiValRecords.add(multiValRecord2); input[1] = new InputData(reconData2, allMultiValAttribMap, false, ChangeType.REGULAR, null); BatchAttributes batchAttribs = new BatchAttributes("ResourceObjectName", "yyyy/MM/dd hh:mm:ss z"); ReconciliationResult result = reconOperationsService.createReconciliationEvents(batchAttribs, input); ArrayList<FailedInputData> failedResult = result.getFailedResult(); assertEquals(0, failedResult.size()); ArrayList<Serializable> batchIds = result.getSuccessResult(); Long batchId = (Long) batchIds.get(0);
+   HashMap<String, Serializable> multiValRecord2 = new HashMap<String, Serializable>();
+   multiValRecord2.put("Group Name", "mygroup2"); 
+   allMultiValRecords.add(multiValRecord2); 
+   input[1] = new InputData(reconData2, allMultiValAttribMap, false, ChangeType.REGULAR, null);
+   
+   BatchAttributes batchAttribs = new BatchAttributes("ResourceObjectName", "yyyy/MM/dd hh:mm:ss z");
+   ReconciliationResult result = reconOperationsService.createReconciliationEvents(batchAttribs, input);
+   ArrayList<FailedInputData> failedResult = result.getFailedResult(); 
+   assertEquals(0, failedResult.size());
+   ArrayList<Serializable> batchIds = result.getSuccessResult(); 
+   Long batchId = (Long) batchIds.get(0);
   */
         }
         
