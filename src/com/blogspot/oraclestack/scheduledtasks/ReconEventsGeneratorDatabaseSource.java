@@ -34,16 +34,13 @@ import oracle.iam.scheduler.vo.TaskSupport;
 
 /**
  * A scheduled task to create reconciliation events of a specified resource object
- * using data from a database table. The database table must be constructed in a way where
- * the column names match the names of the corresponding reconciliation field. Either 
- * trusted or target resource object can be used as long as the required fields are provided. 
+ * using data from a database table. Trusted or target resource object can be 
+ * used as long as the required fields are provided. 
  * @author rayedchan
  * 
  * Additional features:
- * - Attribute Mapping Translation
+ * - Dynamic Attribute Mapping via Lookup
  * - Child Data 
- * TODO: Put batching
- * TODO: Action Date
  */
 public class ReconEventsGeneratorDatabaseSource extends TaskSupport
 {
@@ -250,7 +247,7 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
      * @return List of events to be created
      * @throws SQLException 
      */
-    public List<InputData> constructReconciliationEventList(Connection conn, String tableName, String filter, Boolean eventFinished, Date actionDate, HashMap<String,String> reconAttrMap, String itResName, HashMap<String,String> childTableMappings, HashMap<String,HashMap<String,String>> childColumnMappings, String linkColumnName) throws SQLException
+    private List<InputData> constructReconciliationEventList(Connection conn, String tableName, String filter, Boolean eventFinished, Date actionDate, HashMap<String,String> reconAttrMap, String itResName, HashMap<String,String> childTableMappings, HashMap<String,HashMap<String,String>> childColumnMappings, String linkColumnName) throws SQLException
     {
         List<InputData> allReconEvents = new ArrayList<InputData>();
         String linkColumnValue = null;
@@ -398,7 +395,7 @@ public class ReconEventsGeneratorDatabaseSource extends TaskSupport
      * @throws tcInvalidLookupException
      * @throws tcColumnNotFoundException
      */
-    public HashMap<String, String> convertLookupToMap(tcLookupOperationsIntf lookupOps, String lookupDefinitionName) throws tcAPIException, tcInvalidLookupException, tcColumnNotFoundException 
+    private HashMap<String, String> convertLookupToMap(tcLookupOperationsIntf lookupOps, String lookupDefinitionName) throws tcAPIException, tcInvalidLookupException, tcColumnNotFoundException 
     {
         HashMap<String, String> lookupValues = new HashMap<String, String>();
         
